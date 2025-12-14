@@ -16,7 +16,10 @@
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [120, 300]
+      "position": [
+        120,
+        300
+      ]
     },
     {
       "parameters": {
@@ -40,7 +43,10 @@
       "name": "Get Sites",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [360, 300],
+      "position": [
+        360,
+        300
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "unifi-api-key",
@@ -56,7 +62,10 @@
       "name": "Pick Site",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [580, 300]
+      "position": [
+        580,
+        300
+      ]
     },
     {
       "parameters": {
@@ -80,7 +89,10 @@
       "name": "Fetch Devices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [820, 300],
+      "position": [
+        820,
+        300
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "unifi-api-key",
@@ -96,7 +108,10 @@
       "name": "Analyze Device Health",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1060, 300]
+      "position": [
+        1060,
+        300
+      ]
     },
     {
       "parameters": {
@@ -125,7 +140,10 @@
       "name": "If Degraded",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1300, 300]
+      "position": [
+        1300,
+        300
+      ]
     },
     {
       "parameters": {
@@ -141,7 +159,10 @@
       "name": "Slack Alert",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1540, 280],
+      "position": [
+        1540,
+        280
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "slack-bot-token",
@@ -167,7 +188,10 @@
       "name": "Log Healthy",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1540, 420]
+      "position": [
+        1540,
+        420
+      ]
     }
   ],
   "connections": {
@@ -249,5 +273,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "id": "unifi-health-template"
+  "versionId": "4afe0c14-2bf6-4a9c-bfbf-a93865316c6c"
 }

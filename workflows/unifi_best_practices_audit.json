@@ -7,7 +7,10 @@
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [100, 400]
+      "position": [
+        100,
+        400
+      ]
     },
     {
       "parameters": {
@@ -29,7 +32,10 @@
       "name": "Authenticate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [320, 400]
+      "position": [
+        320,
+        400
+      ]
     },
     {
       "parameters": {
@@ -39,7 +45,10 @@
       "name": "Extract Session",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [540, 400]
+      "position": [
+        540,
+        400
+      ]
     },
     {
       "parameters": {
@@ -65,7 +74,10 @@
       "name": "Get Site Settings",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [800, 200]
+      "position": [
+        800,
+        200
+      ]
     },
     {
       "parameters": {
@@ -91,7 +103,10 @@
       "name": "Get Networks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [800, 340]
+      "position": [
+        800,
+        340
+      ]
     },
     {
       "parameters": {
@@ -117,7 +132,10 @@
       "name": "Get WLANs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [800, 480]
+      "position": [
+        800,
+        480
+      ]
     },
     {
       "parameters": {
@@ -143,7 +161,10 @@
       "name": "Get Firewall Rules",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [800, 620]
+      "position": [
+        800,
+        620
+      ]
     },
     {
       "parameters": {
@@ -169,7 +190,10 @@
       "name": "Get Devices Detail",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [800, 760]
+      "position": [
+        800,
+        760
+      ]
     },
     {
       "parameters": {
@@ -181,7 +205,10 @@
       "name": "Merge All Data",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [1080, 480]
+      "position": [
+        1080,
+        480
+      ]
     },
     {
       "parameters": {
@@ -191,7 +218,10 @@
       "name": "Analyze Best Practices",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 480]
+      "position": [
+        1320,
+        480
+      ]
     },
     {
       "parameters": {
@@ -220,7 +250,10 @@
       "name": "Has Critical Issues?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1560, 480]
+      "position": [
+        1560,
+        480
+      ]
     },
     {
       "parameters": {
@@ -236,7 +269,10 @@
       "name": "Slack Critical Alert",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1800, 380],
+      "position": [
+        1800,
+        380
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "slack-bot-token",
@@ -262,7 +298,10 @@
       "name": "Log Complete",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1800, 560]
+      "position": [
+        1800,
+        560
+      ]
     }
   ],
   "connections": {
@@ -419,5 +458,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "id": "unifi-best-practices-audit"
+  "versionId": "434b7f98-9cee-457f-b4d4-415d4b427ba8"
 }

@@ -7,7 +7,10 @@
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [300, 300]
+      "position": [
+        300,
+        300
+      ]
     },
     {
       "parameters": {
@@ -26,7 +29,10 @@
       "name": "Set Prompt",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
-      "position": [520, 300]
+      "position": [
+        520,
+        300
+      ]
     },
     {
       "parameters": {
@@ -43,7 +49,10 @@
       "name": "OpenAI Codex",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [760, 300]
+      "position": [
+        760,
+        300
+      ]
     },
     {
       "parameters": {
@@ -53,21 +62,48 @@
       "name": "Format Response",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [1000, 300]
+      "position": [
+        1000,
+        300
+      ]
     }
   ],
   "connections": {
     "Manual Trigger": {
-      "main": [[{ "node": "Set Prompt", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Set Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Set Prompt": {
-      "main": [[{ "node": "OpenAI Codex", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "OpenAI Codex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "OpenAI Codex": {
-      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {},
-  "id": "openai-codex-template"
+  "versionId": "4ece3e62-6894-44af-a688-85e4f7b1ee17"
 }
