@@ -6,10 +6,7 @@
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [
-        100,
-        400
-      ]
+      "position": [100, 400]
     },
     {
       "parameters": {
@@ -30,203 +27,139 @@
       "name": "Authenticate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        320,
-        400
-      ]
+      "position": [300, 400]
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst headers = response.headers || {};\nconst setCookie = headers['set-cookie'] || [];\n\nlet cookies = [];\nif (Array.isArray(setCookie)) {\n  cookies = setCookie.map(c => c.split(';')[0]);\n} else if (setCookie) {\n  cookies = [setCookie.split(';')[0]];\n}\n\nconst cookieHeader = cookies.join('; ');\nreturn [{ json: { cookieHeader, authenticated: cookies.length > 0 } }];"
+        "jsCode": "const response = $input.first().json;\nconst headers = response.headers || {};\nconst setCookie = headers['set-cookie'] || [];\n\nlet cookies = [];\nif (Array.isArray(setCookie)) {\n  cookies = setCookie.map(c => c.split(';')[0]);\n} else if (setCookie) {\n  cookies = [setCookie.split(';')[0]];\n}\n\nconst cookieHeader = cookies.join('; ');\nconst baseUrl = $env.UNIFI_BASE_URL.replace(/\\/$/, '');\nconst site = $env.UNIFI_SITE || 'default';\n\nreturn [{ json: { cookieHeader, baseUrl, site } }];"
       },
       "name": "Extract Session",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        540,
-        400
-      ]
+      "position": [500, 400]
     },
     {
       "parameters": {
-        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/setting' }}",
+        "url": "={{ $json.baseUrl + '/proxy/network/api/s/' + $json.site + '/rest/networkconf' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Cookie",
-              "value": "={{ $json.cookieHeader }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "Accept", "value": "application/json" }
           ]
         },
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "name": "Get Settings",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        800,
-        160
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/networkconf' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Cookie",
-              "value": "={{ $('Extract Session').item.json.cookieHeader }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
-          ]
-        },
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
+        "options": { "allowUnauthorizedCerts": true }
       },
       "name": "Get Networks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        800,
-        300
-      ]
+      "position": [700, 400]
     },
     {
       "parameters": {
-        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/wlanconf' }}",
+        "jsCode": "const prev = $('Extract Session').first().json;\nconst networks = $input.first().json.data || [];\nreturn [{ json: { ...prev, networks } }];"
+      },
+      "name": "Store Networks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.baseUrl + '/proxy/network/api/s/' + $json.site + '/rest/wlanconf' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Cookie",
-              "value": "={{ $('Extract Session').item.json.cookieHeader }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "Accept", "value": "application/json" }
           ]
         },
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
+        "options": { "allowUnauthorizedCerts": true }
       },
       "name": "Get WLANs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        800,
-        440
-      ]
+      "position": [1100, 400]
     },
     {
       "parameters": {
-        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/firewallrule' }}",
+        "jsCode": "const prev = $('Store Networks').first().json;\nconst wlans = $input.first().json.data || [];\nreturn [{ json: { ...prev, wlans } }];"
+      },
+      "name": "Store WLANs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.baseUrl + '/proxy/network/api/s/' + $json.site + '/rest/firewallrule' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Cookie",
-              "value": "={{ $('Extract Session').item.json.cookieHeader }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "Accept", "value": "application/json" }
           ]
         },
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
+        "options": { "allowUnauthorizedCerts": true }
       },
       "name": "Get Firewall",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        800,
-        580
-      ]
+      "position": [1500, 400]
     },
     {
       "parameters": {
-        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/stat/device' }}",
+        "jsCode": "const prev = $('Store WLANs').first().json;\nconst firewallRules = $input.first().json.data || [];\nreturn [{ json: { ...prev, firewallRules } }];"
+      },
+      "name": "Store Firewall",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1700, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.baseUrl + '/proxy/network/api/s/' + $json.site + '/stat/device' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Cookie",
-              "value": "={{ $('Extract Session').item.json.cookieHeader }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "Accept", "value": "application/json" }
           ]
         },
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
+        "options": { "allowUnauthorizedCerts": true }
       },
       "name": "Get Devices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        800,
-        720
-      ]
+      "position": [1900, 400]
     },
     {
       "parameters": {
-        "jsCode": "// Collect all incoming data from parallel API calls\nreturn $input.all();"
+        "jsCode": "const prev = $('Store Firewall').first().json;\nconst devices = $input.first().json.data || [];\nreturn [{ json: { ...prev, devices } }];"
       },
-      "name": "Collect Data",
+      "name": "Store Devices",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1060,
-        440
-      ]
+      "position": [2100, 400]
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nlet settings = [], networks = [], wlans = [], firewallRules = [], devices = [];\n\nitems.forEach(item => {\n  const data = item.json.data || [];\n  if (Array.isArray(data)) {\n    data.forEach(d => {\n      if (d.key && typeof d.key === 'string') settings.push(d);\n      else if (d.purpose || d.vlan_enabled !== undefined) networks.push(d);\n      else if (d.wpa_mode || d.security) wlans.push(d);\n      else if (d.ruleset || d.action) firewallRules.push(d);\n      else if (d.mac && (d.type || d.model)) devices.push(d);\n    });\n  }\n});\n\nconst findings = [], passed = [], warnings = [];\n\n// 1. FIRMWARE\nlet outdated = 0;\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  if (d.upgradable || d.upgrade_to_firmware) {\n    outdated++;\n    findings.push({ severity: 'MEDIUM', title: `Firmware update: ${name}`, detail: `Current: ${d.version || 'unknown'}`, recommendation: 'Update firmware' });\n  }\n});\nif (outdated === 0 && devices.length > 0) passed.push({ title: 'Firmware up to date', detail: `${devices.length} devices` });\n\n// 2. VLANs\nconst vlans = networks.filter(n => n.vlan_enabled || n.vlan);\nconst hasIoT = networks.some(n => (n.name || '').toLowerCase().includes('iot'));\nconst hasGuest = networks.some(n => n.is_guest || (n.purpose || '').toLowerCase() === 'guest');\n\nif (vlans.length === 0) findings.push({ severity: 'HIGH', title: 'No VLANs', detail: 'Single segment', recommendation: 'Create VLANs' });\nelse if (vlans.length < 3) warnings.push({ title: 'Limited VLANs', detail: `${vlans.length} VLANs` });\nelse passed.push({ title: 'VLANs configured', detail: `${vlans.length} VLANs` });\n\nif (hasIoT) passed.push({ title: 'IoT network', detail: 'Isolated' });\nelse warnings.push({ title: 'No IoT network', detail: 'Consider isolation' });\n\nif (hasGuest) passed.push({ title: 'Guest network', detail: 'Configured' });\nelse warnings.push({ title: 'No guest network', detail: 'Consider adding' });\n\n// 3. WIRELESS\nwlans.forEach(w => {\n  const name = w.name || 'Unnamed';\n  const sec = (w.security || w.wpa_mode || '').toLowerCase();\n  \n  if (sec.includes('wpa3') || w.wpa3_support) passed.push({ title: `WPA3: ${name}`, detail: 'Secure' });\n  else if (sec.includes('wpa2') || sec.includes('wpapsk')) warnings.push({ title: `WPA2: ${name}`, detail: 'Consider WPA3' });\n  else if (sec === 'open' || !sec) {\n    if (!w.is_guest) findings.push({ severity: 'CRITICAL', title: `Open: ${name}`, detail: 'No encryption', recommendation: 'Enable WPA3' });\n  }\n  \n  if (w.pmf_mode === 'disabled' || w.pmf_mode === 0) {\n    findings.push({ severity: 'MEDIUM', title: `PMF off: ${name}`, detail: '802.11w disabled', recommendation: 'Enable PMF' });\n  }\n});\n\n// 4. FIREWALL\nif (firewallRules.length === 0) warnings.push({ title: 'No firewall rules', detail: 'Consider inter-VLAN rules' });\nelse passed.push({ title: 'Firewall rules', detail: `${firewallRules.length} rules` });\n\n// 5. DEVICES\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  const stats = d['system-stats'] || {};\n  if (stats.mem && parseFloat(stats.mem) > 85) warnings.push({ title: `High memory: ${name}`, detail: `${stats.mem}%` });\n  if (stats.cpu && parseFloat(stats.cpu) > 80) warnings.push({ title: `High CPU: ${name}`, detail: `${stats.cpu}%` });\n});\n\n// SCORE\nconst critical = findings.filter(f => f.severity === 'CRITICAL').length;\nconst high = findings.filter(f => f.severity === 'HIGH').length;\nconst medium = findings.filter(f => f.severity === 'MEDIUM').length;\n\nlet score = 'A';\nif (critical > 0) score = 'F';\nelse if (high > 0) score = 'D';\nelse if (medium > 2) score = 'C';\nelse if (warnings.length > 5) score = 'B';\n\nlet text = `Unifi Audit Report\\nScore: ${score}\\nDevices: ${devices.length} | Networks: ${networks.length} | WLANs: ${wlans.length}\\n\\n`;\nif (findings.length) {\n  text += `FINDINGS (${findings.length}):\\n`;\n  findings.forEach(f => text += `[${f.severity}] ${f.title}\\n`);\n  text += '\\n';\n}\nif (warnings.length) {\n  text += `WARNINGS (${warnings.length}):\\n`;\n  warnings.forEach(w => text += `- ${w.title}\\n`);\n  text += '\\n';\n}\ntext += `PASSED (${passed.length}):\\n`;\npassed.forEach(p => text += `+ ${p.title}\\n`);\n\nreturn [{ json: { score, findings, warnings, passed, summary: { critical, high, medium, warnings: warnings.length, passed: passed.length, devices: devices.length, networks: networks.length, wlans: wlans.length }, textSummary: text } }];"
+        "jsCode": "const data = $input.first().json;\nconst { networks, wlans, firewallRules, devices } = data;\n\nconst findings = [], passed = [], warnings = [];\n\n// 1. FIRMWARE\nlet outdated = 0;\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  if (d.upgradable || d.upgrade_to_firmware) {\n    outdated++;\n    findings.push({ severity: 'MEDIUM', title: `Firmware update: ${name}` });\n  }\n});\nif (outdated === 0 && devices.length > 0) passed.push({ title: 'Firmware up to date', detail: `${devices.length} devices` });\n\n// 2. VLANs\nconst vlans = networks.filter(n => n.vlan_enabled || n.vlan);\nconst hasIoT = networks.some(n => (n.name || '').toLowerCase().includes('iot'));\nconst hasGuest = networks.some(n => n.is_guest || (n.purpose || '').toLowerCase() === 'guest');\n\nif (vlans.length === 0) findings.push({ severity: 'HIGH', title: 'No VLANs configured' });\nelse if (vlans.length < 3) warnings.push({ title: 'Limited VLANs', detail: `${vlans.length} VLANs` });\nelse passed.push({ title: 'VLANs configured', detail: `${vlans.length} VLANs` });\n\nif (hasIoT) passed.push({ title: 'IoT network', detail: 'Isolated' });\nelse warnings.push({ title: 'No IoT network' });\n\nif (hasGuest) passed.push({ title: 'Guest network', detail: 'Configured' });\nelse warnings.push({ title: 'No guest network' });\n\n// 3. WIRELESS\nwlans.forEach(w => {\n  const name = w.name || 'Unnamed';\n  const sec = (w.security || w.wpa_mode || '').toLowerCase();\n  \n  if (sec.includes('wpa3') || w.wpa3_support) passed.push({ title: `WPA3: ${name}` });\n  else if (sec.includes('wpa2') || sec.includes('wpapsk')) warnings.push({ title: `WPA2: ${name}` });\n  else if (sec === 'open' || !sec) {\n    if (!w.is_guest) findings.push({ severity: 'CRITICAL', title: `Open network: ${name}` });\n  }\n  \n  if (w.pmf_mode === 'disabled' || w.pmf_mode === 0) {\n    findings.push({ severity: 'MEDIUM', title: `PMF disabled: ${name}` });\n  }\n});\n\n// 4. FIREWALL\nif (firewallRules.length === 0) warnings.push({ title: 'No firewall rules' });\nelse passed.push({ title: 'Firewall rules', detail: `${firewallRules.length} rules` });\n\n// 5. DEVICE RESOURCES\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  const stats = d['system-stats'] || {};\n  if (stats.mem && parseFloat(stats.mem) > 85) warnings.push({ title: `High memory: ${name}`, detail: `${stats.mem}%` });\n  if (stats.cpu && parseFloat(stats.cpu) > 80) warnings.push({ title: `High CPU: ${name}`, detail: `${stats.cpu}%` });\n});\n\n// SCORE\nconst critical = findings.filter(f => f.severity === 'CRITICAL').length;\nconst high = findings.filter(f => f.severity === 'HIGH').length;\nconst medium = findings.filter(f => f.severity === 'MEDIUM').length;\n\nlet score = 'A';\nif (critical > 0) score = 'F';\nelse if (high > 0) score = 'D';\nelse if (medium > 2) score = 'C';\nelse if (warnings.length > 5) score = 'B';\n\nlet text = `Unifi Audit Report\\nScore: ${score}\\nDevices: ${devices.length} | Networks: ${networks.length} | WLANs: ${wlans.length}\\n\\n`;\nif (findings.length) {\n  text += `FINDINGS (${findings.length}):\\n`;\n  findings.forEach(f => text += `[${f.severity}] ${f.title}\\n`);\n  text += '\\n';\n}\nif (warnings.length) {\n  text += `WARNINGS (${warnings.length}):\\n`;\n  warnings.forEach(w => text += `- ${w.title}\\n`);\n  text += '\\n';\n}\ntext += `PASSED (${passed.length}):\\n`;\npassed.forEach(p => text += `+ ${p.title}\\n`);\n\nreturn [{ json: { score, findings, warnings, passed, summary: { critical, high, medium, warnings: warnings.length, passed: passed.length, devices: devices.length, networks: networks.length, wlans: wlans.length }, textSummary: text } }];"
       },
       "name": "Analyze",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1280,
-        440
-      ]
+      "position": [2300, 400]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
               "leftValue": "={{ $json.summary.critical + $json.summary.high }}",
               "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
+              "operator": { "type": "number", "operation": "gt" }
             }
           ],
           "combinator": "and"
@@ -236,10 +169,7 @@
       "name": "Has Critical?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [
-        1500,
-        440
-      ]
+      "position": [2500, 400]
     },
     {
       "parameters": {
@@ -254,10 +184,7 @@
       "name": "Slack Alert",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        1740,
-        340
-      ],
+      "position": [2740, 300],
       "credentials": {
         "httpHeaderAuth": {
           "id": "slack-bot-token",
@@ -271,7 +198,7 @@
           "assignments": [
             {
               "name": "result",
-              "value": "={{ 'Audit complete. Score: ' + $json.score + ' | Findings: ' + $json.summary.critical + '/' + $json.summary.high + '/' + $json.summary.medium + ' | Passed: ' + $json.summary.passed }}",
+              "value": "={{ 'Audit complete. Score: ' + $json.score + ' | Findings: ' + $json.findings.length + ' | Passed: ' + $json.passed.length }}",
               "type": "string"
             }
           ]
@@ -281,165 +208,28 @@
       "name": "Log Result",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        1740,
-        520
-      ]
+      "position": [2740, 480]
     }
   ],
   "connections": {
-    "Manual Trigger": {
-      "main": [
-        [
-          {
-            "node": "Authenticate",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Authenticate": {
-      "main": [
-        [
-          {
-            "node": "Extract Session",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract Session": {
-      "main": [
-        [
-          {
-            "node": "Get Settings",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get Networks",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get WLANs",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get Firewall",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get Devices",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Settings": {
-      "main": [
-        [
-          {
-            "node": "Collect Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Networks": {
-      "main": [
-        [
-          {
-            "node": "Collect Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get WLANs": {
-      "main": [
-        [
-          {
-            "node": "Collect Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Firewall": {
-      "main": [
-        [
-          {
-            "node": "Collect Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Devices": {
-      "main": [
-        [
-          {
-            "node": "Collect Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Collect Data": {
-      "main": [
-        [
-          {
-            "node": "Analyze",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Analyze": {
-      "main": [
-        [
-          {
-            "node": "Has Critical?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Critical?": {
-      "main": [
-        [
-          {
-            "node": "Slack Alert",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Log Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+    "Manual Trigger": { "main": [[{ "node": "Authenticate", "type": "main", "index": 0 }]] },
+    "Authenticate": { "main": [[{ "node": "Extract Session", "type": "main", "index": 0 }]] },
+    "Extract Session": { "main": [[{ "node": "Get Networks", "type": "main", "index": 0 }]] },
+    "Get Networks": { "main": [[{ "node": "Store Networks", "type": "main", "index": 0 }]] },
+    "Store Networks": { "main": [[{ "node": "Get WLANs", "type": "main", "index": 0 }]] },
+    "Get WLANs": { "main": [[{ "node": "Store WLANs", "type": "main", "index": 0 }]] },
+    "Store WLANs": { "main": [[{ "node": "Get Firewall", "type": "main", "index": 0 }]] },
+    "Get Firewall": { "main": [[{ "node": "Store Firewall", "type": "main", "index": 0 }]] },
+    "Store Firewall": { "main": [[{ "node": "Get Devices", "type": "main", "index": 0 }]] },
+    "Get Devices": { "main": [[{ "node": "Store Devices", "type": "main", "index": 0 }]] },
+    "Store Devices": { "main": [[{ "node": "Analyze", "type": "main", "index": 0 }]] },
+    "Analyze": { "main": [[{ "node": "Has Critical?", "type": "main", "index": 0 }]] },
+    "Has Critical?": { "main": [
+      [{ "node": "Slack Alert", "type": "main", "index": 0 }],
+      [{ "node": "Log Result", "type": "main", "index": 0 }]
+    ] }
   },
   "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "d2f0f07d-1726-4ab8-91aa-688a6a499554"
+  "settings": { "executionOrder": "v1" },
+  "versionId": "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 }
