@@ -372,12 +372,78 @@ curl -X POST http://localhost:8080/api/query \
 
 ---
 
+## OpenAI Codex Cleanup (2025-12-14)
+
+### Changes Made
+Removed all OpenAI Codex references from the codebase:
+
+| File | Action |
+|------|--------|
+| `workflows/openai_codex_inference.json` | Deleted |
+| `README.md` | Updated title, description, prereqs |
+| `CLAUDE.md` | Removed Codex workflow section |
+| `AGENTS.md` | Updated project structure, testing guidelines |
+| `GEMINI.md` | Updated to reflect Claude Agent |
+| `.env.example` | Removed `OPENAI_API_KEY`, `OPENAI_MODEL` |
+| `docker-compose.yml` | Removed OpenAI env vars from n8n service |
+
+### Commits
+- `ce611b8` - Update README to reflect Claude Agent replacing OpenAI Codex
+- `01cdb7b` - Remove OpenAI Codex references, replace with Claude Agent
+
+---
+
+## Post-Cleanup Testing (2025-12-14)
+
+### Stack Restart Verification
+All services started successfully after configuration changes:
+
+| Service | Status | Health Check |
+|---------|--------|--------------|
+| postgres | healthy | `pg_isready` ✅ |
+| chromadb | healthy | TCP 8000 ✅ |
+| n8n | healthy | `/healthz` → `{"status":"ok"}` |
+| claude-agent | healthy | `/api/health` → `{"status":"healthy"}` |
+
+### Claude Agent Endpoint Tests
+
+| Endpoint | Test | Result |
+|----------|------|--------|
+| `GET /api/health` | Health check | ✅ `{"status":"healthy"}` |
+| `POST /api/query` | "Best practices for securing UniFi network" | ✅ Returned detailed WPA3/firewall recommendations with live network data |
+| `POST /api/analyze/health` | Mock device data with degraded status | ✅ AI identified UDM-Pro high CPU, U6-Pro restart, provided remediation |
+| `POST /api/analyze/audit` | Mock audit findings | ✅ Prioritized recommendations (Critical → Medium) with specific UniFi paths |
+| `POST /api/knowledge/search` | "WPA3 security best practices" | ✅ 5 results from knowledge base (69% top relevance) |
+| `GET /api/knowledge/stats` | Knowledge base status | ✅ 117 documents indexed in `unifi_knowledge` collection |
+
+### Slack Integration Test
+
+| Component | Status |
+|-----------|--------|
+| Socket Mode | ⚡️ Connected (session `s_15736413143901`) |
+| Bot Auth | ✅ `n8n_codex` @ `freeddev.slack.com` |
+| Message Send | ✅ Test message posted to `#alerts` |
+
+### Live UniFi API Calls (via Agent)
+During query tests, the agent successfully called:
+- `get_unifi_devices` → Fetched from Integration API
+- `get_wlan_config` → Retrieved WLAN settings
+- `get_network_config` → Retrieved VLAN configuration
+- `get_firewall_rules` → Retrieved firewall rules
+- `search_knowledge_base` → ChromaDB vector search
+
+All API calls authenticated and returned data from the live UniFi controller.
+
+---
+
 ## Next Steps / TODO
 
 - [x] ~~Update OpenAI workflow to use chat completions API~~ (Replaced with Claude Agent)
 - [x] ~~Add ANTHROPIC_API_KEY to `.env`~~
 - [x] ~~Configure Slack Socket Mode (generate xapp- token)~~
 - [x] ~~Build and test claude-agent service~~
+- [x] ~~Remove OpenAI Codex references from codebase~~
+- [x] ~~Verify stack restart after cleanup~~
 - [ ] Generate proper N8N_ENCRYPTION_KEY (warning: changing invalidates credentials)
 - [ ] Configure WPA3 on wireless networks
 - [ ] Enable PMF (Protected Management Frames)
