@@ -3,7 +3,6 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "trigger",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -15,7 +14,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/api/auth/login'}}",
+        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/api/auth/login' }}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ username: $env.UNIFI_USERNAME, password: $env.UNIFI_PASSWORD }) }}",
@@ -28,7 +27,6 @@
           }
         }
       },
-      "id": "login",
       "name": "Authenticate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -39,9 +37,8 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extract session cookies from login response\nconst response = $input.first().json;\nconst headers = response.headers || {};\nconst setCookie = headers['set-cookie'] || [];\n\n// Parse cookies into a single cookie header string\nlet cookies = [];\nif (Array.isArray(setCookie)) {\n  cookies = setCookie.map(c => c.split(';')[0]);\n} else if (setCookie) {\n  cookies = [setCookie.split(';')[0]];\n}\n\nconst cookieHeader = cookies.join('; ');\n\nreturn [{ json: { cookieHeader, authenticated: cookies.length > 0 } }];"
+        "jsCode": "const response = $input.first().json;\nconst headers = response.headers || {};\nconst setCookie = headers['set-cookie'] || [];\n\nlet cookies = [];\nif (Array.isArray(setCookie)) {\n  cookies = setCookie.map(c => c.split(';')[0]);\n} else if (setCookie) {\n  cookies = [setCookie.split(';')[0]];\n}\n\nconst cookieHeader = cookies.join('; ');\nreturn [{ json: { cookieHeader, authenticated: cookies.length > 0 } }];"
       },
-      "id": "extract-cookies",
       "name": "Extract Session",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -52,7 +49,7 @@
     },
     {
       "parameters": {
-        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/setting'}}",
+        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/setting' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -70,18 +67,17 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "get-settings",
-      "name": "Get Site Settings",
+      "name": "Get Settings",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         800,
-        200
+        160
       ]
     },
     {
       "parameters": {
-        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/networkconf'}}",
+        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/networkconf' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -99,18 +95,17 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "get-networks",
       "name": "Get Networks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         800,
-        340
+        300
       ]
     },
     {
       "parameters": {
-        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/wlanconf'}}",
+        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/wlanconf' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -128,18 +123,17 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "get-wlan",
       "name": "Get WLANs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         800,
-        480
+        440
       ]
     },
     {
       "parameters": {
-        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/firewallrule'}}",
+        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/rest/firewallrule' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -157,18 +151,17 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "get-firewall",
-      "name": "Get Firewall Rules",
+      "name": "Get Firewall",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         800,
-        620
+        580
       ]
     },
     {
       "parameters": {
-        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/stat/device'}}",
+        "url": "={{ $env.UNIFI_BASE_URL.replace(/\\/$/, '') + '/proxy/network/api/s/' + ($env.UNIFI_SITE || 'default') + '/stat/device' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -186,39 +179,36 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "get-devices",
-      "name": "Get Devices Detail",
+      "name": "Get Devices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         800,
-        760
+        720
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Collect all data from parallel API calls\nconst allItems = $input.all();\n\n// Pass through all items to the next node\nreturn allItems;"
+        "jsCode": "// Collect all incoming data from parallel API calls\nreturn $input.all();"
       },
-      "id": "merge-all",
-      "name": "Collect All Data",
+      "name": "Collect Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1080,
-        480
+        1060,
+        440
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Unifi Best Practices Audit\n// Based on Ubiquiti recommendations and security best practices\n\nconst items = $input.all();\n\n// Parse input data - handle various data structures\nlet settings = [];\nlet networks = [];\nlet wlans = [];\nlet firewallRules = [];\nlet devices = [];\n\nitems.forEach(item => {\n  const data = item.json.data || item.json || [];\n  if (Array.isArray(data)) {\n    data.forEach(d => {\n      // Identify data type by key properties\n      if (d.key && typeof d.key === 'string') {\n        // Settings have 'key' field\n        settings.push(d);\n      } else if (d.purpose || d.vlan_enabled !== undefined) {\n        // Networks have 'purpose' or 'vlan_enabled'\n        networks.push(d);\n      } else if (d.wpa_mode || d.security) {\n        // WLANs have 'wpa_mode' or 'security'\n        wlans.push(d);\n      } else if (d.ruleset || d.action) {\n        // Firewall rules have 'ruleset' or 'action'\n        firewallRules.push(d);\n      } else if (d.mac && (d.type || d.model)) {\n        // Devices have 'mac' and 'type' or 'model'\n        devices.push(d);\n      }\n    });\n  }\n});\n\nconst findings = [];\nconst passed = [];\nconst warnings = [];\n\n// Helper functions\nconst addFinding = (category, severity, title, detail, recommendation) => {\n  findings.push({ category, severity, title, detail, recommendation });\n};\n\nconst addPassed = (category, title, detail) => {\n  passed.push({ category, title, detail });\n};\n\nconst addWarning = (category, title, detail) => {\n  warnings.push({ category, title, detail });\n};\n\n// ========================================\n// 1. DEVICE FIRMWARE CHECKS\n// ========================================\nlet outdatedDevices = 0;\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  if (d.upgradable || d.upgrade_to_firmware) {\n    outdatedDevices++;\n    addFinding(\n      'Firmware',\n      'MEDIUM',\n      `Firmware update available: ${name}`,\n      `Current: ${d.version || 'unknown'}, Available: ${d.upgrade_to_firmware || 'newer version'}`,\n      'Update firmware to latest stable version for security patches and bug fixes'\n    );\n  }\n});\nif (outdatedDevices === 0 && devices.length > 0) {\n  addPassed('Firmware', 'All devices up to date', `${devices.length} devices checked`);\n}\n\n// ========================================\n// 2. NETWORK SEGMENTATION (VLANs)\n// ========================================\nconst vlansInUse = networks.filter(n => n.vlan_enabled || n.vlan);\nconst hasIoTNetwork = networks.some(n => \n  (n.name || '').toLowerCase().includes('iot') || \n  (n.purpose || '').toLowerCase().includes('iot')\n);\nconst hasGuestNetwork = networks.some(n => \n  n.is_guest || (n.purpose || '').toLowerCase() === 'guest'\n);\n\nif (vlansInUse.length === 0) {\n  addFinding(\n    'Network Segmentation',\n    'HIGH',\n    'No VLANs configured',\n    'All traffic is on a single network segment',\n    'Create VLANs to segment traffic (e.g., IoT, Guest, Management, Trusted)'\n  );\n} else if (vlansInUse.length < 3) {\n  addWarning(\n    'Network Segmentation',\n    'Limited VLANs',\n    `Only ${vlansInUse.length} VLAN(s) configured. Consider additional segmentation.`\n  );\n} else {\n  addPassed('Network Segmentation', 'VLANs in use', `${vlansInUse.length} VLANs configured`);\n}\n\nif (!hasIoTNetwork) {\n  addWarning(\n    'Network Segmentation',\n    'No dedicated IoT network',\n    'Consider creating an isolated VLAN for IoT devices'\n  );\n}\n\nif (!hasGuestNetwork) {\n  addWarning(\n    'Network Segmentation',\n    'No guest network configured',\n    'Consider creating an isolated guest network'\n  );\n} else {\n  addPassed('Network Segmentation', 'Guest network configured', 'Guest network isolation in place');\n}\n\n// ========================================\n// 3. WIRELESS SECURITY\n// ========================================\nwlans.forEach(wlan => {\n  const name = wlan.name || 'Unnamed WLAN';\n  const security = wlan.security || wlan.wpa_mode || '';\n  \n  // Check for WPA3\n  if (security.toLowerCase().includes('wpa3') || wlan.wpa3_support) {\n    addPassed('Wireless Security', `WPA3 enabled: ${name}`, 'Using latest wireless security');\n  } else if (security.toLowerCase().includes('wpa2')) {\n    addWarning(\n      'Wireless Security',\n      `WPA2 only: ${name}`,\n      'Consider enabling WPA3 for enhanced security'\n    );\n  } else if (security.toLowerCase().includes('wpa') || security.toLowerCase().includes('wep')) {\n    addFinding(\n      'Wireless Security',\n      'CRITICAL',\n      `Weak wireless security: ${name}`,\n      `Using ${security} which is insecure`,\n      'Upgrade to WPA3 or at minimum WPA2-Enterprise'\n    );\n  }\n  \n  // Check for open networks\n  if (security.toLowerCase() === 'open' || !security) {\n    if (!wlan.is_guest) {\n      addFinding(\n        'Wireless Security',\n        'CRITICAL',\n        `Open network detected: ${name}`,\n        'Network has no encryption',\n        'Enable WPA3/WPA2 encryption'\n      );\n    } else {\n      addWarning('Wireless Security', `Open guest network: ${name}`, 'Consider captive portal with terms of service');\n    }\n  }\n  \n  // Check PMKID (Protected Management Key) \n  if (wlan.pmf_mode === 'disabled' || wlan.pmf_mode === 0) {\n    addFinding(\n      'Wireless Security',\n      'MEDIUM',\n      `PMF disabled: ${name}`,\n      'Protected Management Frames not enabled',\n      'Enable PMF (802.11w) for management frame protection'\n    );\n  }\n  \n  // Check for hidden SSID (not actually more secure)\n  if (wlan.hide_ssid) {\n    addWarning(\n      'Wireless Security',\n      `Hidden SSID: ${name}`,\n      'Hidden SSIDs do not improve security and may cause connectivity issues'\n    );\n  }\n});\n\n// ========================================\n// 4. FIREWALL RULES\n// ========================================\nif (firewallRules.length === 0) {\n  addWarning(\n    'Firewall',\n    'No custom firewall rules',\n    'Consider adding firewall rules for inter-VLAN traffic control'\n  );\n} else {\n  addPassed('Firewall', 'Custom firewall rules configured', `${firewallRules.length} rules defined`);\n  \n  // Check for inter-VLAN isolation rules\n  const hasInterVlanRules = firewallRules.some(r => \n    (r.name || '').toLowerCase().includes('vlan') ||\n    (r.name || '').toLowerCase().includes('isolate')\n  );\n  \n  if (!hasInterVlanRules && vlansInUse.length > 1) {\n    addWarning(\n      'Firewall',\n      'No inter-VLAN rules detected',\n      'Consider adding rules to control traffic between VLANs'\n    );\n  }\n}\n\n// ========================================\n// 5. SETTINGS ANALYSIS\n// ========================================\nconst settingsMap = {};\nsettings.forEach(s => { settingsMap[s.key] = s; });\n\n// Check auto-upgrade settings\nconst autoUpgrade = settingsMap['auto_upgrade'] || settingsMap['mgmt'];\nif (autoUpgrade) {\n  if (autoUpgrade.auto_upgrade === false) {\n    addWarning(\n      'Maintenance',\n      'Auto-upgrade disabled',\n      'Consider enabling auto-upgrade for security patches (with maintenance window)'\n    );\n  } else {\n    addPassed('Maintenance', 'Auto-upgrade enabled', 'Devices will receive automatic updates');\n  }\n}\n\n// Check for SSH access\nconst sshEnabled = devices.some(d => d.config && d.config.ssh_enabled);\nif (sshEnabled) {\n  addWarning(\n    'Security',\n    'SSH enabled on devices',\n    'Disable SSH when not needed for maintenance'\n  );\n}\n\n// ========================================\n// 6. DEVICE-SPECIFIC CHECKS\n// ========================================\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  const type = d.type || '';\n  \n  // Check adoption status\n  if (d.state === 0 || d.state === 'pending') {\n    addFinding(\n      'Device Status',\n      'MEDIUM',\n      `Device pending adoption: ${name}`,\n      'Device is not fully adopted',\n      'Complete device adoption process'\n    );\n  }\n  \n  // Check for default passwords (can't directly check but warn)\n  if (d.default_password_used) {\n    addFinding(\n      'Security',\n      'CRITICAL',\n      `Default password in use: ${name}`,\n      'Device may be using factory default credentials',\n      'Change device passwords immediately'\n    );\n  }\n  \n  // Check uptime (if too high, might need restart)\n  if (d.uptime && d.uptime > 90 * 24 * 60 * 60) { // 90 days\n    addWarning(\n      'Maintenance',\n      `High uptime: ${name}`,\n      `Uptime: ${Math.floor(d.uptime / 86400)} days. Consider periodic restarts after updates.`\n    );\n  }\n  \n  // Check for high load\n  if (d.system_stats) {\n    if (d.system_stats.cpu > 80) {\n      addWarning('Performance', `High CPU: ${name}`, `CPU at ${d.system_stats.cpu}%`);\n    }\n    if (d.system_stats.mem > 85) {\n      addWarning('Performance', `High memory: ${name}`, `Memory at ${d.system_stats.mem}%`);\n    }\n  }\n});\n\n// ========================================\n// GENERATE REPORT\n// ========================================\nconst criticalCount = findings.filter(f => f.severity === 'CRITICAL').length;\nconst highCount = findings.filter(f => f.severity === 'HIGH').length;\nconst mediumCount = findings.filter(f => f.severity === 'MEDIUM').length;\n\nlet overallScore = 'A';\nif (criticalCount > 0) overallScore = 'F';\nelse if (highCount > 0) overallScore = 'D';\nelse if (mediumCount > 2) overallScore = 'C';\nelse if (warnings.length > 5) overallScore = 'B';\n\nconst report = {\n  summary: {\n    score: overallScore,\n    criticalFindings: criticalCount,\n    highFindings: highCount,\n    mediumFindings: mediumCount,\n    warnings: warnings.length,\n    passed: passed.length,\n    devicesAudited: devices.length,\n    networksAudited: networks.length,\n    wlansAudited: wlans.length\n  },\n  findings: findings.sort((a, b) => {\n    const order = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };\n    return order[a.severity] - order[b.severity];\n  }),\n  warnings,\n  passed,\n  timestamp: new Date().toISOString()\n};\n\n// Generate text summary for Slack\nlet textSummary = `Unifi Best Practices Audit Report\\n`;\ntextSummary += `================================\\n`;\ntextSummary += `Overall Score: ${overallScore}\\n`;\ntextSummary += `Devices: ${devices.length} | Networks: ${networks.length} | WLANs: ${wlans.length}\\n\\n`;\n\nif (criticalCount + highCount > 0) {\n  textSummary += `CRITICAL/HIGH FINDINGS (${criticalCount + highCount}):\\n`;\n  findings.filter(f => f.severity === 'CRITICAL' || f.severity === 'HIGH').forEach(f => {\n    textSummary += `[${f.severity}] ${f.title}\\n`;\n    textSummary += `  -> ${f.recommendation}\\n`;\n  });\n  textSummary += `\\n`;\n}\n\nif (mediumCount > 0) {\n  textSummary += `MEDIUM FINDINGS (${mediumCount}):\\n`;\n  findings.filter(f => f.severity === 'MEDIUM').forEach(f => {\n    textSummary += `- ${f.title}\\n`;\n  });\n  textSummary += `\\n`;\n}\n\nif (warnings.length > 0) {\n  textSummary += `WARNINGS (${warnings.length}):\\n`;\n  warnings.forEach(w => {\n    textSummary += `- ${w.title}\\n`;\n  });\n  textSummary += `\\n`;\n}\n\ntextSummary += `PASSED CHECKS (${passed.length}):\\n`;\npassed.forEach(p => {\n  textSummary += `+ ${p.title}\\n`;\n});\n\nreport.textSummary = textSummary;\n\nreturn [{ json: report }];"
+        "jsCode": "const items = $input.all();\n\nlet settings = [], networks = [], wlans = [], firewallRules = [], devices = [];\n\nitems.forEach(item => {\n  const data = item.json.data || [];\n  if (Array.isArray(data)) {\n    data.forEach(d => {\n      if (d.key && typeof d.key === 'string') settings.push(d);\n      else if (d.purpose || d.vlan_enabled !== undefined) networks.push(d);\n      else if (d.wpa_mode || d.security) wlans.push(d);\n      else if (d.ruleset || d.action) firewallRules.push(d);\n      else if (d.mac && (d.type || d.model)) devices.push(d);\n    });\n  }\n});\n\nconst findings = [], passed = [], warnings = [];\n\n// 1. FIRMWARE\nlet outdated = 0;\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  if (d.upgradable || d.upgrade_to_firmware) {\n    outdated++;\n    findings.push({ severity: 'MEDIUM', title: `Firmware update: ${name}`, detail: `Current: ${d.version || 'unknown'}`, recommendation: 'Update firmware' });\n  }\n});\nif (outdated === 0 && devices.length > 0) passed.push({ title: 'Firmware up to date', detail: `${devices.length} devices` });\n\n// 2. VLANs\nconst vlans = networks.filter(n => n.vlan_enabled || n.vlan);\nconst hasIoT = networks.some(n => (n.name || '').toLowerCase().includes('iot'));\nconst hasGuest = networks.some(n => n.is_guest || (n.purpose || '').toLowerCase() === 'guest');\n\nif (vlans.length === 0) findings.push({ severity: 'HIGH', title: 'No VLANs', detail: 'Single segment', recommendation: 'Create VLANs' });\nelse if (vlans.length < 3) warnings.push({ title: 'Limited VLANs', detail: `${vlans.length} VLANs` });\nelse passed.push({ title: 'VLANs configured', detail: `${vlans.length} VLANs` });\n\nif (hasIoT) passed.push({ title: 'IoT network', detail: 'Isolated' });\nelse warnings.push({ title: 'No IoT network', detail: 'Consider isolation' });\n\nif (hasGuest) passed.push({ title: 'Guest network', detail: 'Configured' });\nelse warnings.push({ title: 'No guest network', detail: 'Consider adding' });\n\n// 3. WIRELESS\nwlans.forEach(w => {\n  const name = w.name || 'Unnamed';\n  const sec = (w.security || w.wpa_mode || '').toLowerCase();\n  \n  if (sec.includes('wpa3') || w.wpa3_support) passed.push({ title: `WPA3: ${name}`, detail: 'Secure' });\n  else if (sec.includes('wpa2') || sec.includes('wpapsk')) warnings.push({ title: `WPA2: ${name}`, detail: 'Consider WPA3' });\n  else if (sec === 'open' || !sec) {\n    if (!w.is_guest) findings.push({ severity: 'CRITICAL', title: `Open: ${name}`, detail: 'No encryption', recommendation: 'Enable WPA3' });\n  }\n  \n  if (w.pmf_mode === 'disabled' || w.pmf_mode === 0) {\n    findings.push({ severity: 'MEDIUM', title: `PMF off: ${name}`, detail: '802.11w disabled', recommendation: 'Enable PMF' });\n  }\n});\n\n// 4. FIREWALL\nif (firewallRules.length === 0) warnings.push({ title: 'No firewall rules', detail: 'Consider inter-VLAN rules' });\nelse passed.push({ title: 'Firewall rules', detail: `${firewallRules.length} rules` });\n\n// 5. DEVICES\ndevices.forEach(d => {\n  const name = d.name || d.mac;\n  const stats = d['system-stats'] || {};\n  if (stats.mem && parseFloat(stats.mem) > 85) warnings.push({ title: `High memory: ${name}`, detail: `${stats.mem}%` });\n  if (stats.cpu && parseFloat(stats.cpu) > 80) warnings.push({ title: `High CPU: ${name}`, detail: `${stats.cpu}%` });\n});\n\n// SCORE\nconst critical = findings.filter(f => f.severity === 'CRITICAL').length;\nconst high = findings.filter(f => f.severity === 'HIGH').length;\nconst medium = findings.filter(f => f.severity === 'MEDIUM').length;\n\nlet score = 'A';\nif (critical > 0) score = 'F';\nelse if (high > 0) score = 'D';\nelse if (medium > 2) score = 'C';\nelse if (warnings.length > 5) score = 'B';\n\nlet text = `Unifi Audit Report\\nScore: ${score}\\nDevices: ${devices.length} | Networks: ${networks.length} | WLANs: ${wlans.length}\\n\\n`;\nif (findings.length) {\n  text += `FINDINGS (${findings.length}):\\n`;\n  findings.forEach(f => text += `[${f.severity}] ${f.title}\\n`);\n  text += '\\n';\n}\nif (warnings.length) {\n  text += `WARNINGS (${warnings.length}):\\n`;\n  warnings.forEach(w => text += `- ${w.title}\\n`);\n  text += '\\n';\n}\ntext += `PASSED (${passed.length}):\\n`;\npassed.forEach(p => text += `+ ${p.title}\\n`);\n\nreturn [{ json: { score, findings, warnings, passed, summary: { critical, high, medium, warnings: warnings.length, passed: passed.length, devices: devices.length, networks: networks.length, wlans: wlans.length }, textSummary: text } }];"
       },
-      "id": "analyze",
-      "name": "Analyze Best Practices",
+      "name": "Analyze",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1320,
-        480
+        1280,
+        440
       ]
     },
     {
@@ -231,8 +221,7 @@
           },
           "conditions": [
             {
-              "id": "has-critical",
-              "leftValue": "={{ $json.summary.criticalFindings + $json.summary.highFindings }}",
+              "leftValue": "={{ $json.summary.critical + $json.summary.high }}",
               "rightValue": 0,
               "operator": {
                 "type": "number",
@@ -244,13 +233,12 @@
         },
         "options": {}
       },
-      "id": "check-critical",
-      "name": "Has Critical Issues?",
+      "name": "Has Critical?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1560,
-        480
+        1500,
+        440
       ]
     },
     {
@@ -261,15 +249,14 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_CHANNEL || '#alerts', text: ':rotating_light: Unifi Security Audit - Critical Issues Found\\n```' + $json.textSummary.substring(0, 2900) + '```' }) }}"
+        "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_CHANNEL || '#alerts', text: ':rotating_light: Unifi Audit Alert\\n```' + $json.textSummary.substring(0, 2900) + '```' }) }}"
       },
-      "id": "slack-alert",
-      "name": "Slack Critical Alert",
+      "name": "Slack Alert",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1800,
-        380
+        1740,
+        340
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -283,22 +270,20 @@
         "assignments": {
           "assignments": [
             {
-              "id": "report",
-              "name": "auditComplete",
-              "value": "={{ 'Audit completed. Score: ' + $json.summary.score + ' | Findings: ' + ($json.summary.criticalFindings + $json.summary.highFindings + $json.summary.mediumFindings) + ' | Warnings: ' + $json.summary.warnings + ' | Passed: ' + $json.summary.passed }}",
+              "name": "result",
+              "value": "={{ 'Audit complete. Score: ' + $json.score + ' | Findings: ' + $json.summary.critical + '/' + $json.summary.high + '/' + $json.summary.medium + ' | Passed: ' + $json.summary.passed }}",
               "type": "string"
             }
           ]
         },
         "options": {}
       },
-      "id": "log-complete",
-      "name": "Log Complete",
+      "name": "Log Result",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1800,
-        560
+        1740,
+        520
       ]
     }
   ],
@@ -329,7 +314,7 @@
       "main": [
         [
           {
-            "node": "Get Site Settings",
+            "node": "Get Settings",
             "type": "main",
             "index": 0
           },
@@ -344,23 +329,23 @@
             "index": 0
           },
           {
-            "node": "Get Firewall Rules",
+            "node": "Get Firewall",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Get Devices Detail",
+            "node": "Get Devices",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Site Settings": {
+    "Get Settings": {
       "main": [
         [
           {
-            "node": "Merge All Data",
+            "node": "Collect Data",
             "type": "main",
             "index": 0
           }
@@ -371,7 +356,7 @@
       "main": [
         [
           {
-            "node": "Merge All Data",
+            "node": "Collect Data",
             "type": "main",
             "index": 0
           }
@@ -382,69 +367,69 @@
       "main": [
         [
           {
-            "node": "Merge All Data",
+            "node": "Collect Data",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Firewall Rules": {
+    "Get Firewall": {
       "main": [
         [
           {
-            "node": "Merge All Data",
+            "node": "Collect Data",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Devices Detail": {
+    "Get Devices": {
       "main": [
         [
           {
-            "node": "Merge All Data",
+            "node": "Collect Data",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Merge All Data": {
+    "Collect Data": {
       "main": [
         [
           {
-            "node": "Analyze Best Practices",
+            "node": "Analyze",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Analyze Best Practices": {
+    "Analyze": {
       "main": [
         [
           {
-            "node": "Has Critical Issues?",
+            "node": "Has Critical?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Has Critical Issues?": {
+    "Has Critical?": {
       "main": [
         [
           {
-            "node": "Slack Critical Alert",
+            "node": "Slack Alert",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Log Complete",
+            "node": "Log Result",
             "type": "main",
             "index": 0
           }
@@ -456,5 +441,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "434b7f98-9cee-457f-b4d4-415d4b427ba8"
+  "versionId": "d2f0f07d-1726-4ab8-91aa-688a6a499554"
 }
