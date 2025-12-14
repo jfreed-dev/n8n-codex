@@ -2,11 +2,23 @@
   "name": "Unifi Best Practices Audit",
   "nodes": [
     {
-      "parameters": {},
-      "name": "Manual Trigger",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [100, 400]
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hour": 8
+            }
+          ]
+        }
+      },
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        400
+      ]
     },
     {
       "parameters": {
@@ -27,7 +39,10 @@
       "name": "Authenticate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [300, 400]
+      "position": [
+        300,
+        400
+      ]
     },
     {
       "parameters": {
@@ -36,7 +51,10 @@
       "name": "Extract Session",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [500, 400]
+      "position": [
+        500,
+        400
+      ]
     },
     {
       "parameters": {
@@ -44,16 +62,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
-            { "name": "Accept", "value": "application/json" }
+            {
+              "name": "Cookie",
+              "value": "={{ $json.cookieHeader }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
           ]
         },
-        "options": { "allowUnauthorizedCerts": true }
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
       },
       "name": "Get Networks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [700, 400]
+      "position": [
+        700,
+        400
+      ]
     },
     {
       "parameters": {
@@ -62,7 +91,10 @@
       "name": "Store Networks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 400]
+      "position": [
+        900,
+        400
+      ]
     },
     {
       "parameters": {
@@ -70,16 +102,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
-            { "name": "Accept", "value": "application/json" }
+            {
+              "name": "Cookie",
+              "value": "={{ $json.cookieHeader }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
           ]
         },
-        "options": { "allowUnauthorizedCerts": true }
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
       },
       "name": "Get WLANs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1100, 400]
+      "position": [
+        1100,
+        400
+      ]
     },
     {
       "parameters": {
@@ -88,7 +131,10 @@
       "name": "Store WLANs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1300, 400]
+      "position": [
+        1300,
+        400
+      ]
     },
     {
       "parameters": {
@@ -96,16 +142,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
-            { "name": "Accept", "value": "application/json" }
+            {
+              "name": "Cookie",
+              "value": "={{ $json.cookieHeader }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
           ]
         },
-        "options": { "allowUnauthorizedCerts": true }
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
       },
       "name": "Get Firewall",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1500, 400]
+      "position": [
+        1500,
+        400
+      ]
     },
     {
       "parameters": {
@@ -114,7 +171,10 @@
       "name": "Store Firewall",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1700, 400]
+      "position": [
+        1700,
+        400
+      ]
     },
     {
       "parameters": {
@@ -122,16 +182,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
-            { "name": "Accept", "value": "application/json" }
+            {
+              "name": "Cookie",
+              "value": "={{ $json.cookieHeader }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
           ]
         },
-        "options": { "allowUnauthorizedCerts": true }
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
       },
       "name": "Get Devices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1900, 400]
+      "position": [
+        1900,
+        400
+      ]
     },
     {
       "parameters": {
@@ -140,7 +211,10 @@
       "name": "Store Devices",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2100, 400]
+      "position": [
+        2100,
+        400
+      ]
     },
     {
       "parameters": {
@@ -149,17 +223,27 @@
       "name": "Analyze",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2300, 400]
+      "position": [
+        2300,
+        400
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "leftValue": "={{ $json.summary.critical + $json.summary.high }}",
               "rightValue": 0,
-              "operator": { "type": "number", "operation": "gt" }
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
             }
           ],
           "combinator": "and"
@@ -169,7 +253,10 @@
       "name": "Has Critical?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2500, 400]
+      "position": [
+        2500,
+        400
+      ]
     },
     {
       "parameters": {
@@ -184,7 +271,10 @@
       "name": "Slack Alert",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2740, 300],
+      "position": [
+        2740,
+        300
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "slack-bot-token",
@@ -208,28 +298,167 @@
       "name": "Log Result",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [2740, 480]
+      "position": [
+        2740,
+        480
+      ]
     }
   ],
   "connections": {
-    "Manual Trigger": { "main": [[{ "node": "Authenticate", "type": "main", "index": 0 }]] },
-    "Authenticate": { "main": [[{ "node": "Extract Session", "type": "main", "index": 0 }]] },
-    "Extract Session": { "main": [[{ "node": "Get Networks", "type": "main", "index": 0 }]] },
-    "Get Networks": { "main": [[{ "node": "Store Networks", "type": "main", "index": 0 }]] },
-    "Store Networks": { "main": [[{ "node": "Get WLANs", "type": "main", "index": 0 }]] },
-    "Get WLANs": { "main": [[{ "node": "Store WLANs", "type": "main", "index": 0 }]] },
-    "Store WLANs": { "main": [[{ "node": "Get Firewall", "type": "main", "index": 0 }]] },
-    "Get Firewall": { "main": [[{ "node": "Store Firewall", "type": "main", "index": 0 }]] },
-    "Store Firewall": { "main": [[{ "node": "Get Devices", "type": "main", "index": 0 }]] },
-    "Get Devices": { "main": [[{ "node": "Store Devices", "type": "main", "index": 0 }]] },
-    "Store Devices": { "main": [[{ "node": "Analyze", "type": "main", "index": 0 }]] },
-    "Analyze": { "main": [[{ "node": "Has Critical?", "type": "main", "index": 0 }]] },
-    "Has Critical?": { "main": [
-      [{ "node": "Slack Alert", "type": "main", "index": 0 }],
-      [{ "node": "Log Result", "type": "main", "index": 0 }]
-    ] }
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Authenticate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate": {
+      "main": [
+        [
+          {
+            "node": "Extract Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Session": {
+      "main": [
+        [
+          {
+            "node": "Get Networks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Networks": {
+      "main": [
+        [
+          {
+            "node": "Store Networks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Networks": {
+      "main": [
+        [
+          {
+            "node": "Get WLANs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get WLANs": {
+      "main": [
+        [
+          {
+            "node": "Store WLANs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store WLANs": {
+      "main": [
+        [
+          {
+            "node": "Get Firewall",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Firewall": {
+      "main": [
+        [
+          {
+            "node": "Store Firewall",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Firewall": {
+      "main": [
+        [
+          {
+            "node": "Get Devices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Devices": {
+      "main": [
+        [
+          {
+            "node": "Store Devices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Devices": {
+      "main": [
+        [
+          {
+            "node": "Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze": {
+      "main": [
+        [
+          {
+            "node": "Has Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Critical?": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "active": false,
-  "settings": { "executionOrder": "v1" },
-  "versionId": "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e191c345-888f-4cae-9a58-9b716a82e18d"
 }
