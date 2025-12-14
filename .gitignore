@@ -1,0 +1,9 @@
+# Environment secrets
+.env
+
+# n8n runtime data
+.n8n_data/
+
+# Temporary files
+*.log
+*.tmp

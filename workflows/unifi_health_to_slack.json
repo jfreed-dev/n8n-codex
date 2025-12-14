@@ -1,0 +1,253 @@
+{
+  "name": "Unifi Health to Slack (Devices-Based)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [120, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/proxy/network/integration/v1/sites'}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "2",
+      "name": "Get Sites",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [360, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "unifi-api-key",
+          "name": "Unifi API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const envSite = $env.UNIFI_SITE || 'default';\nconst data = $input.first().json.data || [];\nlet picked = data.find(s => s.internalReference === envSite) || data[0];\nreturn [{ json: { siteId: picked ? picked.id : null, siteRef: picked ? picked.internalReference : null } }];"
+      },
+      "id": "3",
+      "name": "Pick Site",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [580, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{($env.UNIFI_BASE_URL || 'https://192.168.1.1').replace(/\\/$/, '') + '/proxy/network/integration/v1/sites/' + $json.siteId + '/devices'}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "5",
+      "name": "Fetch Devices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [820, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "unifi-api-key",
+          "name": "Unifi API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const devices = $input.first().json.data || [];\n\nconst alerts = [];\nconst deviceStats = {\n  total: devices.length,\n  connected: 0,\n  disconnected: 0,\n  upgradeAvailable: 0,\n  adopting: 0,\n  provisioning: 0\n};\n\n// Device states: ONLINE, OFFLINE, ADOPTING, PROVISIONING, etc.\ndevices.forEach(d => {\n  const state = (d.state || '').toUpperCase();\n  const name = d.name || d.mac || 'Unknown';\n  const model = d.model || '';\n  \n  // Count by state\n  if (state === 'ONLINE' || state === 'CONNECTED') {\n    deviceStats.connected++;\n  } else if (state === 'OFFLINE' || state === 'DISCONNECTED') {\n    deviceStats.disconnected++;\n    alerts.push(`Device OFFLINE: ${name} (${model})`);\n  } else if (state === 'ADOPTING') {\n    deviceStats.adopting++;\n    alerts.push(`Device ADOPTING: ${name} (${model})`);\n  } else if (state === 'PROVISIONING') {\n    deviceStats.provisioning++;\n  } else if (state) {\n    // Unknown state - flag it\n    alerts.push(`Device ${name}: unusual state '${state}'`);\n  }\n  \n  // Check for firmware upgrades available\n  if (d.upgradable || d.upgradeable || (d.upgrade_to_firmware && d.upgrade_to_firmware !== d.version)) {\n    deviceStats.upgradeAvailable++;\n    const currentVer = d.version || d.displayableVersion || 'unknown';\n    const newVer = d.upgrade_to_firmware || d.latestFirmwareVersion || 'available';\n    alerts.push(`Firmware upgrade: ${name} (${currentVer} -> ${newVer})`);\n  }\n  \n  // Check for high resource usage if available\n  if (d.system_stats) {\n    const cpu = d.system_stats.cpu;\n    const mem = d.system_stats.mem;\n    if (cpu && cpu > 90) {\n      alerts.push(`High CPU: ${name} at ${cpu}%`);\n    }\n    if (mem && mem > 90) {\n      alerts.push(`High Memory: ${name} at ${mem}%`);\n    }\n  }\n  \n  // Check uptime - if very low, device recently restarted\n  if (d.uptime !== undefined && d.uptime < 300 && state === 'ONLINE') {\n    alerts.push(`Recent restart: ${name} (uptime: ${Math.floor(d.uptime / 60)} min)`);\n  }\n});\n\n// Build summary\nlet summary = `Unifi Network Status:\\n`;\nsummary += `- Total devices: ${deviceStats.total}\\n`;\nsummary += `- Connected: ${deviceStats.connected}\\n`;\nif (deviceStats.disconnected > 0) {\n  summary += `- DISCONNECTED: ${deviceStats.disconnected}\\n`;\n}\nif (deviceStats.adopting > 0) {\n  summary += `- Adopting: ${deviceStats.adopting}\\n`;\n}\nif (deviceStats.upgradeAvailable > 0) {\n  summary += `- Upgrades available: ${deviceStats.upgradeAvailable}\\n`;\n}\n\nif (alerts.length > 0) {\n  summary += `\\nAlerts:\\n` + alerts.map(a => `- ${a}`).join('\\n');\n}\n\nconst degraded = deviceStats.disconnected > 0 || deviceStats.adopting > 0;\n\nreturn [{ \n  json: { \n    summary,\n    alerts,\n    degraded,\n    deviceStats,\n    devices: devices.map(d => ({\n      name: d.name || d.mac,\n      mac: d.mac,\n      model: d.model,\n      state: d.state,\n      ip: d.ip,\n      version: d.version || d.displayableVersion,\n      upgradable: d.upgradable || d.upgradeable || false,\n      uptime: d.uptime\n    }))\n  } \n}];"
+      },
+      "id": "9",
+      "name": "Analyze Device Health",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "degraded-check",
+              "leftValue": "={{ $json.degraded }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "10",
+      "name": "If Degraded",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_CHANNEL || '#alerts', text: ':warning: ' + $json.summary }) }}"
+      },
+      "id": "11",
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 280],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "slack-bot-token",
+          "name": "Slack Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "value": "={{ 'All ' + $json.deviceStats.total + ' devices healthy' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "12",
+      "name": "Log Healthy",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1540, 420]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Sites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Sites": {
+      "main": [
+        [
+          {
+            "node": "Pick Site",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Site": {
+      "main": [
+        [
+          {
+            "node": "Fetch Devices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Devices": {
+      "main": [
+        [
+          {
+            "node": "Analyze Device Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Device Health": {
+      "main": [
+        [
+          {
+            "node": "If Degraded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Degraded": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Healthy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "unifi-health-template"
+}

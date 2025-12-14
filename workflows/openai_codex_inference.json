@@ -1,0 +1,73 @@
+{
+  "name": "OpenAI Codex Inference (Template)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "prompt",
+              "value": "Write a bash script that prints hello world"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Set Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/completions",
+        "authentication": "none",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "sendBody": true,
+        "bodyParametersJson": "={\"model\": $env.OPENAI_MODEL || \"code-davinci-002\", \"prompt\": $json.prompt, \"temperature\": 0.2, \"max_tokens\": 200, \"n\": 1}",
+        "headerParametersJson": "={\"Authorization\": \"Bearer \" + $env.OPENAI_API_KEY, \"Content-Type\": \"application/json\"}"
+      },
+      "id": "3",
+      "name": "OpenAI Codex",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const choice = items[0].json.choices && items[0].json.choices[0];\nreturn [{ json: { prompt: $json.prompt, completion: choice ? choice.text.trim() : '' } }];"
+      },
+      "id": "4",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Set Prompt", "type": "main", "index": 0 }]]
+    },
+    "Set Prompt": {
+      "main": [[{ "node": "OpenAI Codex", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Codex": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "openai-codex-template"
+}
