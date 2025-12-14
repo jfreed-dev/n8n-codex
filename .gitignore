@@ -7,3 +7,20 @@
 # Temporary files
 *.log
 *.tmp
+*.bak
+
+# Editor/IDE files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.backup
+*.orig

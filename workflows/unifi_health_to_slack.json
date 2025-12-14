@@ -49,7 +49,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "unifi-api-key",
+          "id": "JGGcHH1qRD1Ov2OS",
           "name": "Unifi API Key"
         }
       }
@@ -95,7 +95,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "unifi-api-key",
+          "id": "JGGcHH1qRD1Ov2OS",
           "name": "Unifi API Key"
         }
       }
@@ -165,7 +165,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "slack-bot-token",
+          "id": "811evcI0T3nHShsO",
           "name": "Slack Bot Token"
         }
       }
