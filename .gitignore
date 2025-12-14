@@ -24,3 +24,18 @@ Thumbs.db
 # Backup files
 *.backup
 *.orig
+
+# ChromaDB data
+chromadb_data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/

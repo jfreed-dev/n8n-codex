@@ -200,10 +200,145 @@ Networks found with security issues:
 
 ---
 
+## Claude Agent Implementation (2025-12-14)
+
+### Overview
+Replaced OpenAI Codex with a Claude-powered intelligent agent service that:
+- Acts as UniFi network expert (WiFi, networking, security, UniFi 10.x)
+- Answers questions via Slack (Socket Mode - works behind firewall)
+- Provides AI analysis for existing n8n workflows
+- Uses ChromaDB for RAG-based knowledge retrieval
+
+### New Services Added
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| `claude-agent` | 8080 | Claude AI agent with UniFi expertise |
+| `chromadb` | 8000 | Vector database for knowledge base |
+
+### Claude Agent Directory Structure
+
+```
+claude-agent/
+├── Dockerfile
+├── requirements.txt
+├── pyproject.toml
+├── src/
+│   ├── main.py              # FastAPI + Slack startup
+│   ├── config.py            # Environment configuration
+│   ├── agent/
+│   │   ├── core.py          # Claude API client with tool use
+│   │   ├── tools.py         # UniFi tool definitions
+│   │   └── prompts.py       # System prompts
+│   ├── slack/
+│   │   └── handler.py       # Slack Socket Mode handler
+│   ├── api/
+│   │   └── routes.py        # HTTP API for n8n
+│   ├── knowledge/
+│   │   └── embeddings.py    # ChromaDB client
+│   └── unifi/
+│       ├── integration_api.py   # X-API-KEY auth
+│       └── controller_api.py    # Cookie session auth
+└── knowledge/               # Markdown docs indexed to ChromaDB
+    ├── unifi_10x_features.md
+    ├── wifi_best_practices.md
+    ├── network_security.md
+    ├── troubleshooting.md
+    └── faqs.md
+```
+
+### HTTP API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/health` | GET | Health check |
+| `/api/query` | POST | General agent query |
+| `/api/analyze/health` | POST | Analyze device health (for Health workflow) |
+| `/api/analyze/audit` | POST | Generate recommendations (for Audit workflow) |
+| `/api/knowledge/search` | POST | Search knowledge base |
+
+### Available Tools (MCP-style)
+
+The agent has these tools available:
+- `get_unifi_sites` - List all UniFi sites
+- `get_unifi_devices` - Get device status and firmware
+- `get_device_details` - Detailed info for specific device
+- `get_network_config` - VLAN/network configuration
+- `get_wlan_config` - Wireless settings (WPA3, PMF)
+- `get_firewall_rules` - Firewall rule list
+- `search_knowledge_base` - RAG search of documentation
+
+### Workflow Updates
+
+Both workflows now call the Claude agent for AI-powered analysis:
+
+**Unifi Health to Slack**:
+- Added "AI Analysis" node after "If Degraded"
+- Calls `/api/analyze/health` with device data
+- Slack alert includes AI analysis
+
+**Unifi Best Practices Audit**:
+- Added "AI Recommendations" node after "Analyze"
+- Calls `/api/analyze/audit` with findings and raw config
+- Slack alert includes AI remediation recommendations
+
+### New Environment Variables
+
+```bash
+# Anthropic (required)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Slack Socket Mode (required for Slack integration)
+SLACK_APP_TOKEN=xapp-...
+```
+
+### Slack App Configuration
+
+To enable Socket Mode:
+1. Go to https://api.slack.com/apps > Your App
+2. Enable **Socket Mode** in settings
+3. Generate App-Level Token with `connections:write` scope
+4. Add to `.env` as `SLACK_APP_TOKEN`
+5. Subscribe to events: `app_mention`, `message.im`
+6. Add bot scopes: `chat:write`, `app_mentions:read`, `im:history`
+
+### Starting the New Services
+
+```bash
+# Build and start all services
+docker compose up -d --build
+
+# View claude-agent logs
+docker compose logs -f claude-agent
+
+# Check ChromaDB health
+curl http://localhost:8000/api/v1/heartbeat
+
+# Test agent health
+curl http://localhost:8080/api/health
+
+# Test a query
+curl -X POST http://localhost:8080/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What are best practices for VLAN segmentation?"}'
+```
+
+### Token Optimization Strategy
+
+- Workflows collect data via direct API calls (no AI tokens)
+- AI analysis only triggered when issues detected
+- Knowledge base cached in ChromaDB (no re-embedding)
+- Uses Claude Sonnet for balance of capability and cost
+
+---
+
 ## Next Steps / TODO
 
+- [x] ~~Update OpenAI workflow to use chat completions API~~ (Replaced with Claude Agent)
 - [ ] Generate proper N8N_ENCRYPTION_KEY (warning: changing invalidates credentials)
-- [ ] Update OpenAI workflow to use chat completions API
+- [ ] Add ANTHROPIC_API_KEY to `.env`
+- [ ] Configure Slack Socket Mode (generate xapp- token)
+- [ ] Build and test claude-agent service
 - [ ] Configure WPA3 on wireless networks
 - [ ] Enable PMF (Protected Management Frames)
 - [ ] Set up firewall rules for VLAN isolation

@@ -61,6 +61,64 @@ services:
       retries: 3
       start_period: 30s
 
+  claude-agent:
+    build:
+      context: ./claude-agent
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Anthropic API
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Slack Socket Mode
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+      - SLACK_CHANNEL=${SLACK_CHANNEL}
+      # UniFi APIs
+      - UNIFI_BASE_URL=${UNIFI_BASE_URL}
+      - UNIFI_API_TOKEN=${UNIFI_API_TOKEN}
+      - UNIFI_USERNAME=${UNIFI_USERNAME}
+      - UNIFI_PASSWORD=${UNIFI_PASSWORD}
+      - UNIFI_SITE=${UNIFI_SITE}
+      # ChromaDB
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      # Logging
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./claude-agent/knowledge:/app/knowledge:ro
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  chromadb:
+    image: chromadb/chroma:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chromadb_data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=false
+      - ALLOW_RESET=false
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/heartbeat || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
 networks:
   backend:
     driver: bridge

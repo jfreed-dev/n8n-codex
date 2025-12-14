@@ -148,19 +148,39 @@
     {
       "parameters": {
         "method": "POST",
+        "url": "http://claude-agent:8080/api/analyze/health",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ devices: $json.devices, summary: $json.summary }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "13",
+      "name": "AI Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
         "url": "https://slack.com/api/chat.postMessage",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_CHANNEL || '#alerts', text: ':warning: ' + $json.summary }) }}"
+        "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_CHANNEL || '#alerts', text: ':warning: *UniFi Network Alert*\\n\\n' + $json.analysis }) }}"
       },
       "id": "11",
       "name": "Slack Alert",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1540,
+        1780,
         280
       ],
       "credentials": {
@@ -254,7 +274,7 @@
       "main": [
         [
           {
-            "node": "Slack Alert",
+            "node": "AI Analysis",
             "type": "main",
             "index": 0
           }
@@ -262,6 +282,17 @@
         [
           {
             "node": "Log Healthy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
             "type": "main",
             "index": 0
           }
