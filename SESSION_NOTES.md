@@ -332,13 +332,53 @@ curl -X POST http://localhost:8080/api/query \
 
 ---
 
+## Testing Results (2025-12-14)
+
+### Service Status
+| Service | Status | Port |
+|---------|--------|------|
+| n8n | healthy | 5678 |
+| postgres | healthy | 5432 |
+| chromadb | healthy | 8000 |
+| claude-agent | healthy | 8080 |
+
+### API Endpoint Tests
+| Endpoint | Method | Result |
+|----------|--------|--------|
+| `/api/health` | GET | ✅ `{"status":"healthy"}` |
+| `/api/knowledge/stats` | GET | ✅ 117 documents indexed |
+| `/api/knowledge/search` | POST | ✅ RAG search working |
+| `/api/query` | POST | ✅ Claude API responding |
+| `/api/analyze/health` | POST | ✅ Returns AI analysis with recommendations |
+| `/api/analyze/audit` | POST | ✅ Returns prioritized remediation steps |
+
+### Slack Bot Test
+- Socket Mode: ✅ Connected (session established)
+- DM Response: ✅ Working
+- Tool Execution: ✅ `search_knowledge_base` called successfully
+- Response Time: ~15 seconds (includes knowledge base search)
+
+### n8n Workflow Integration
+| Workflow | Schedule | AI Trigger Condition | Status |
+|----------|----------|---------------------|--------|
+| Unifi Health to Slack | Every 15 min | When devices degraded | ✅ Running |
+| Unifi Best Practices Audit | Daily 8 AM | When critical/high issues | ✅ Running |
+
+**Note:** AI endpoints only called when issues detected (saves tokens). Recent executions show all devices healthy with no critical findings.
+
+### Fixes Applied During Testing
+1. **requirements.txt**: Changed `claude-code-sdk` → `anthropic` (uses direct API)
+2. **docker-compose.yml**: Updated chromadb healthcheck to use bash tcp check (curl not in container)
+
+---
+
 ## Next Steps / TODO
 
 - [x] ~~Update OpenAI workflow to use chat completions API~~ (Replaced with Claude Agent)
+- [x] ~~Add ANTHROPIC_API_KEY to `.env`~~
+- [x] ~~Configure Slack Socket Mode (generate xapp- token)~~
+- [x] ~~Build and test claude-agent service~~
 - [ ] Generate proper N8N_ENCRYPTION_KEY (warning: changing invalidates credentials)
-- [ ] Add ANTHROPIC_API_KEY to `.env`
-- [ ] Configure Slack Socket Mode (generate xapp- token)
-- [ ] Build and test claude-agent service
 - [ ] Configure WPA3 on wireless networks
 - [ ] Enable PMF (Protected Management Frames)
 - [ ] Set up firewall rules for VLAN isolation
