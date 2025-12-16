@@ -38,6 +38,7 @@ class UniFiControllerAPI:
         self.verify_ssl = verify_ssl
         self._client: httpx.AsyncClient | None = None
         self._authenticated = False
+        self._csrf_token: str | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client with cookie jar."""
@@ -56,6 +57,7 @@ class UniFiControllerAPI:
             await self._client.aclose()
             self._client = None
             self._authenticated = False
+            self._csrf_token = None
 
     async def authenticate(self) -> bool:
         """Authenticate with the controller and store session cookie.
@@ -74,7 +76,12 @@ class UniFiControllerAPI:
 
         if response.status_code == 200:
             self._authenticated = True
-            logger.info("Successfully authenticated with UniFi controller")
+            # Capture CSRF token from response headers (required for write operations on UniFi OS)
+            self._csrf_token = response.headers.get("x-csrf-token")
+            if self._csrf_token:
+                logger.info(f"Successfully authenticated with UniFi controller (CSRF token captured)")
+            else:
+                logger.info("Successfully authenticated with UniFi controller (no CSRF token in response)")
             return True
 
         logger.error(f"Authentication failed: {response.status_code}")
@@ -88,14 +95,27 @@ class UniFiControllerAPI:
         client = await self._get_client()
         url = f"{self.base_url}/proxy/network/api/s/{self.site}{path}"
 
-        logger.debug(f"API request: {method} {url}")
+        # Add CSRF token header for write operations (required by UniFi OS)
+        if method.upper() in ("POST", "PUT", "DELETE") and self._csrf_token:
+            headers = kwargs.get("headers", {})
+            headers["x-csrf-token"] = self._csrf_token
+            kwargs["headers"] = headers
+            logger.debug(f"API request: {method} {url} (with CSRF token)")
+        else:
+            logger.debug(f"API request: {method} {url}")
+
         response = await client.request(method, url, **kwargs)
 
-        # Re-authenticate if session expired
-        if response.status_code == 401:
-            logger.info("Session expired, re-authenticating")
+        # Re-authenticate if session expired or forbidden (CSRF token may have expired)
+        if response.status_code in (401, 403):
+            logger.info(f"Request returned {response.status_code}, re-authenticating")
             self._authenticated = False
             await self.authenticate()
+            # Re-add CSRF token after re-authentication
+            if method.upper() in ("POST", "PUT", "DELETE") and self._csrf_token:
+                headers = kwargs.get("headers", {})
+                headers["x-csrf-token"] = self._csrf_token
+                kwargs["headers"] = headers
             response = await client.request(method, url, **kwargs)
 
         response.raise_for_status()
