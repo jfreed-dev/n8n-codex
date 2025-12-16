@@ -81,6 +81,11 @@ services:
       # ChromaDB
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
+      # Duo MFA (for admin action confirmations)
+      - DUO_INTEGRATION_KEY=${DUO_INTEGRATION_KEY}
+      - DUO_SECRET_KEY=${DUO_SECRET_KEY}
+      - DUO_API_HOST=${DUO_API_HOST}
+      - DUO_MFA_USER=${DUO_MFA_USER}
       # Logging
       - LOG_LEVEL=INFO
     volumes:

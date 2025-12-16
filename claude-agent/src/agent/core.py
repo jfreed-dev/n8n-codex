@@ -12,7 +12,7 @@ import httpx
 
 from ..config import settings
 from .prompts import UNIFI_EXPERT_SYSTEM_PROMPT, HEALTH_ANALYSIS_PROMPT, AUDIT_ANALYSIS_PROMPT
-from .tools import TOOL_DEFINITIONS
+from .tools import TOOL_DEFINITIONS, ConfirmationRequired
 
 logger = logging.getLogger(__name__)
 
@@ -80,8 +80,12 @@ class UniFiExpertAgent:
 
         return tools
 
-    async def _execute_tool(self, tool_name: str, tool_input: dict) -> str:
-        """Execute a tool and return its result."""
+    async def _execute_tool(self, tool_name: str, tool_input: dict) -> str | ConfirmationRequired:
+        """Execute a tool and return its result.
+
+        Returns:
+            String result, or ConfirmationRequired if the tool needs user confirmation.
+        """
         for tool_def in TOOL_DEFINITIONS:
             if tool_def["name"] == tool_name:
                 func = tool_def["function"]
@@ -94,7 +98,7 @@ class UniFiExpertAgent:
 
         return f"Unknown tool: {tool_name}"
 
-    async def query(self, user_message: str, context: dict | None = None) -> str:
+    async def query(self, user_message: str, context: dict | None = None) -> str | ConfirmationRequired:
         """Query the agent with a user message.
 
         Args:
@@ -102,7 +106,8 @@ class UniFiExpertAgent:
             context: Optional context dictionary
 
         Returns:
-            The agent's response text
+            The agent's response text, or ConfirmationRequired if an admin
+            action needs user confirmation before execution.
         """
         client = await self._get_client()
 
@@ -151,12 +156,17 @@ class UniFiExpertAgent:
                         tool_use_id = block.get("id")
 
                         logger.info(f"Executing tool: {tool_name}")
-                        result_text = await self._execute_tool(tool_name, tool_input)
+                        result = await self._execute_tool(tool_name, tool_input)
+
+                        # Check if this is a confirmation request
+                        if isinstance(result, ConfirmationRequired):
+                            logger.info(f"Tool {tool_name} requires confirmation")
+                            return result
 
                         tool_results.append({
                             "type": "tool_result",
                             "tool_use_id": tool_use_id,
-                            "content": result_text,
+                            "content": result,
                         })
                         assistant_content.append(block)
                     else:

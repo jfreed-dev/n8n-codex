@@ -170,3 +170,226 @@ class UniFiControllerAPI:
         """
         result = await self._request("GET", "/rest/setting")
         return result.get("data", [])
+
+    # =========================================================================
+    # Additional Read Methods (Phase 1)
+    # =========================================================================
+
+    async def get_clients(self) -> list[dict[str, Any]]:
+        """Get all connected clients.
+
+        Returns:
+            List of client objects with MAC, IP, hostname, signal, traffic, etc.
+        """
+        result = await self._request("GET", "/stat/sta")
+        return result.get("data", [])
+
+    async def get_client_by_mac(self, mac: str) -> dict[str, Any] | None:
+        """Get a specific client by MAC address.
+
+        Args:
+            mac: Client MAC address (e.g., "00:11:22:33:44:55")
+
+        Returns:
+            Client object or None if not found
+        """
+        clients = await self.get_clients()
+        mac_normalized = mac.lower().replace("-", ":")
+        for client in clients:
+            if client.get("mac", "").lower() == mac_normalized:
+                return client
+        return None
+
+    async def get_events(self, hours: int = 24) -> list[dict[str, Any]]:
+        """Get recent events.
+
+        Args:
+            hours: Number of hours of events to retrieve (default: 24)
+
+        Returns:
+            List of event objects
+        """
+        import time
+        start = int((time.time() - hours * 3600) * 1000)
+        result = await self._request("GET", f"/stat/event?start={start}")
+        return result.get("data", [])
+
+    async def get_alarms(self) -> list[dict[str, Any]]:
+        """Get active alarms.
+
+        Returns:
+            List of alarm objects
+        """
+        result = await self._request("GET", "/stat/alarm")
+        return result.get("data", [])
+
+    async def get_dpi(self) -> list[dict[str, Any]]:
+        """Get DPI (Deep Packet Inspection) statistics.
+
+        Returns:
+            List of DPI statistics by application category
+        """
+        result = await self._request("GET", "/stat/dpi")
+        return result.get("data", [])
+
+    async def get_hourly_site_stats(self, hours: int = 24) -> list[dict[str, Any]]:
+        """Get hourly traffic statistics for the site.
+
+        Args:
+            hours: Number of hours of stats to retrieve (default: 24)
+
+        Returns:
+            List of hourly statistics objects
+        """
+        attrs = ["bytes", "wan-tx_bytes", "wan-rx_bytes", "num_sta"]
+        result = await self._request(
+            "POST",
+            "/stat/report/hourly.site",
+            json={"attrs": attrs, "n": hours}
+        )
+        return result.get("data", [])
+
+    # =========================================================================
+    # Write Methods (Phase 3 - Administrative Actions)
+    # =========================================================================
+
+    async def device_command(self, mac: str, cmd: str) -> dict[str, Any]:
+        """Send a command to a device.
+
+        Args:
+            mac: Device MAC address
+            cmd: Command to execute:
+                - "restart": Reboot the device
+                - "locate": Blink LED for identification
+                - "upgrade": Start firmware upgrade
+                - "adopt": Adopt the device
+                - "delete": Forget/remove the device
+
+        Returns:
+            API response dict
+        """
+        result = await self._request(
+            "POST",
+            "/cmd/devmgr",
+            json={"mac": mac, "cmd": cmd}
+        )
+        return result
+
+    async def client_command(self, mac: str, cmd: str) -> dict[str, Any]:
+        """Send a command for a client.
+
+        Args:
+            mac: Client MAC address
+            cmd: Command to execute:
+                - "kick": Disconnect the client (can reconnect)
+                - "block": Permanently block the client
+                - "unblock": Remove from block list
+
+        Returns:
+            API response dict
+        """
+        result = await self._request(
+            "POST",
+            "/cmd/stamgr",
+            json={"mac": mac, "cmd": f"{cmd}-sta"}
+        )
+        return result
+
+    async def authorize_guest(
+        self,
+        mac: str,
+        minutes: int = 60,
+        up_kbps: int | None = None,
+        down_kbps: int | None = None,
+        bytes_quota: int | None = None,
+    ) -> dict[str, Any]:
+        """Authorize a guest client.
+
+        Args:
+            mac: Client MAC address
+            minutes: Authorization duration in minutes
+            up_kbps: Upload rate limit in Kbps (optional)
+            down_kbps: Download rate limit in Kbps (optional)
+            bytes_quota: Data quota in bytes (optional)
+
+        Returns:
+            API response dict
+        """
+        payload: dict[str, Any] = {
+            "mac": mac,
+            "cmd": "authorize-guest",
+            "minutes": minutes
+        }
+        if up_kbps is not None:
+            payload["up"] = up_kbps
+        if down_kbps is not None:
+            payload["down"] = down_kbps
+        if bytes_quota is not None:
+            payload["bytes"] = bytes_quota
+
+        result = await self._request("POST", "/cmd/stamgr", json=payload)
+        return result
+
+    async def update_wlan(self, wlan_id: str, **updates) -> dict[str, Any]:
+        """Update WLAN configuration.
+
+        Args:
+            wlan_id: The WLAN's _id field
+            **updates: Fields to update (e.g., enabled=True, x_passphrase="newpass")
+
+        Returns:
+            API response dict
+        """
+        result = await self._request(
+            "PUT",
+            f"/rest/wlanconf/{wlan_id}",
+            json=updates
+        )
+        return result
+
+    async def get_wlan_by_name(self, name: str) -> dict[str, Any] | None:
+        """Find a WLAN by its name.
+
+        Args:
+            name: WLAN name (SSID)
+
+        Returns:
+            WLAN object or None if not found
+        """
+        wlans = await self.get_wlans()
+        for wlan in wlans:
+            if wlan.get("name", "").lower() == name.lower():
+                return wlan
+        return None
+
+    async def update_firewall_rule(self, rule_id: str, **updates) -> dict[str, Any]:
+        """Update a firewall rule.
+
+        Args:
+            rule_id: The rule's _id field
+            **updates: Fields to update (e.g., enabled=True)
+
+        Returns:
+            API response dict
+        """
+        result = await self._request(
+            "PUT",
+            f"/rest/firewallrule/{rule_id}",
+            json=updates
+        )
+        return result
+
+    async def get_firewall_rule_by_name(self, name: str) -> dict[str, Any] | None:
+        """Find a firewall rule by its name.
+
+        Args:
+            name: Firewall rule name
+
+        Returns:
+            Rule object or None if not found
+        """
+        rules = await self.get_firewall_rules()
+        for rule in rules:
+            if rule.get("name", "").lower() == name.lower():
+                return rule
+        return None
