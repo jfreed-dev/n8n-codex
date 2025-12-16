@@ -436,6 +436,128 @@ All API calls authenticated and returned data from the live UniFi controller.
 
 ---
 
+## Administrative Tools & Confirmation Flow (2025-12-16)
+
+### Overview
+Extended the Claude-powered Slack bot with:
+- Additional read capabilities (clients, traffic, events, alarms)
+- Administrative write capabilities with safety controls
+- Confirmation-based approval flow with Slack interactive buttons
+- Duo MFA integration for dangerous/critical actions
+
+### New Read Tools Added
+
+| Tool | Description |
+|------|-------------|
+| `get_connected_clients` | List clients with MAC, IP, hostname, signal, traffic |
+| `get_client_details` | Full details for a specific client by MAC |
+| `get_traffic_stats` | Bandwidth usage trends over time |
+| `get_dpi_stats` | Application-level traffic breakdown (DPI) |
+| `get_top_clients` | Top bandwidth consumers |
+| `get_recent_events` | Device and client events |
+| `get_alarms` | Active network alarms |
+
+### Administrative Tools Added
+
+| Tool | Risk Level | Confirmation |
+|------|------------|--------------|
+| `device_admin_command` (locate) | Safe | None |
+| `device_admin_command` (restart) | Moderate | Slack button |
+| `device_admin_command` (upgrade/forget) | Dangerous/Critical | Slack + Duo MFA |
+| `client_admin_command` (unblock) | Safe | None |
+| `client_admin_command` (kick) | Moderate | Slack button |
+| `client_admin_command` (block) | Dangerous | Slack + Duo MFA |
+| `create_guest_access` | Safe | None |
+| `update_wlan_settings` | Varies | Depends on operation |
+| `update_firewall_rule_settings` | Dangerous | Slack + Duo MFA |
+
+### Confirmation Flow Architecture
+
+```
+User Request → Agent Decides Action → Risk Assessment
+                                           │
+                    ┌──────────────────────┼──────────────────────┐
+                    ▼                      ▼                      ▼
+                  Safe               Moderate              Dangerous/Critical
+                    │                      │                      │
+            Execute Now         Slack Approve/Deny      Slack Approve/Deny
+                                          │                      │
+                                   On Approve            On Approve
+                                          │                      │
+                                   Execute Now            Duo MFA Push
+                                                               │
+                                                        On Approve
+                                                               │
+                                                        Execute Now
+```
+
+### New Files Created
+
+| File | Purpose |
+|------|---------|
+| `claude-agent/src/agent/confirmations.py` | Confirmation store, Duo MFA client, pending action management |
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `controller_api.py` | Added read methods (clients, events, alarms, DPI) and write methods (device/client commands, WLAN/firewall updates) |
+| `tools.py` | Added 12+ new tools with ConfirmationRequired dataclass |
+| `handler.py` | Added Slack interactive button handlers for Approve/Deny flow |
+| `core.py` | Handle ConfirmationRequired responses from tools |
+| `prompts.py` | Updated system prompt with new tool documentation |
+| `config.py` | Added Duo environment variables |
+| `requirements.txt` | Added `duo_client>=5.0.0` |
+| `docker-compose.yml` | Added Duo env vars to claude-agent service |
+
+### New Environment Variables
+
+```bash
+# Duo MFA (for admin action confirmations)
+DUO_INTEGRATION_KEY=...
+DUO_SECRET_KEY=...
+DUO_API_HOST=api-XXXXXXXX.duosecurity.com
+DUO_MFA_USER=user@example.com
+```
+
+### UniFi API 403 Forbidden Fix
+
+**Problem**: All write operations (POST/PUT/DELETE) to UniFi API returned 403 Forbidden, while read operations worked fine.
+
+**Root Cause**: UniFi OS (Dream Machine products) requires a CSRF token for all write operations. The token is returned in the `x-csrf-token` response header after authentication.
+
+**Solution** (in `controller_api.py`):
+1. Capture `x-csrf-token` from authentication response
+2. Include it in all write operation headers
+3. Re-authenticate on 403 responses (CSRF token expiry)
+
+```python
+# Key changes in controller_api.py
+self._csrf_token: str | None = None
+
+# In authenticate():
+self._csrf_token = response.headers.get("x-csrf-token")
+
+# In _request():
+if method.upper() in ("POST", "PUT", "DELETE") and self._csrf_token:
+    headers["x-csrf-token"] = self._csrf_token
+```
+
+### Testing Results
+
+| Command | Flow | Result |
+|---------|------|--------|
+| "Locate device 60:22:32:9b:ee:a9" | Safe → Execute | ✅ HTTP 200 |
+| "Restart device 60:22:32:99:22:2d" | Moderate → Confirm → Execute | ✅ HTTP 200 |
+| "Block client 18:b4:30:e0:ed:30" | Dangerous → Confirm → Duo MFA → Execute | ✅ HTTP 200 |
+| "Unblock client 18:b4:30:e0:ed:30" | Safe → Execute | ✅ HTTP 200 |
+
+### Commits
+
+- `e66c631` - Fix UniFi API 403 Forbidden on write operations (CSRF token fix)
+
+---
+
 ## Next Steps / TODO
 
 - [x] ~~Update OpenAI workflow to use chat completions API~~ (Replaced with Claude Agent)
@@ -444,6 +566,9 @@ All API calls authenticated and returned data from the live UniFi controller.
 - [x] ~~Build and test claude-agent service~~
 - [x] ~~Remove OpenAI Codex references from codebase~~
 - [x] ~~Verify stack restart after cleanup~~
+- [x] ~~Add administrative tools with confirmation flow~~
+- [x] ~~Integrate Duo MFA for dangerous actions~~
+- [x] ~~Fix UniFi API 403 Forbidden (CSRF token)~~
 - [ ] Generate proper N8N_ENCRYPTION_KEY (warning: changing invalidates credentials)
 - [ ] Configure WPA3 on wireless networks
 - [ ] Enable PMF (Protected Management Frames)
