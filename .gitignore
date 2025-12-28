@@ -1,7 +1,12 @@
-# AI instruction files
-AGENTS.md
+# AI coding assistants
 CLAUDE.md
+AGENT.md
+AGENTS.md
 GEMINI.md
+CODEX.md
+.claude/
+.gemini/
+.codex/
 
 # Environment secrets
 .env
