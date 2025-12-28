@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog
+
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          echo "tag=${PREV_TAG:-$(git rev-list --max-parents=0 HEAD)}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "## What's Changed" > changelog.md
+          echo "" >> changelog.md
+
+          # Get commits since last tag
+          if git rev-parse "${{ steps.prev_tag.outputs.tag }}" >/dev/null 2>&1; then
+            RANGE="${{ steps.prev_tag.outputs.tag }}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+
+          # Group commits by type
+          echo "### Features" >> changelog.md
+          git log $RANGE --pretty=format:"- %s (%h)" --grep="^feat" --grep="^add" --grep="^Add" --grep="Feature" -i | head -20 >> changelog.md || true
+          echo "" >> changelog.md
+
+          echo "### Bug Fixes" >> changelog.md
+          git log $RANGE --pretty=format:"- %s (%h)" --grep="^fix" --grep="^Fix" -i | head -20 >> changelog.md || true
+          echo "" >> changelog.md
+
+          echo "### Other Changes" >> changelog.md
+          git log $RANGE --pretty=format:"- %s (%h)" --invert-grep --grep="^feat" --grep="^add" --grep="^Add" --grep="^fix" --grep="^Fix" --grep="^deps" -i | head -20 >> changelog.md || true
+          echo "" >> changelog.md
+
+          echo "### Dependencies" >> changelog.md
+          git log $RANGE --pretty=format:"- %s (%h)" --grep="^deps" -i | head -20 >> changelog.md || true
+          echo "" >> changelog.md
+
+          # Add compare link
+          if [ -n "${{ steps.prev_tag.outputs.tag }}" ] && git rev-parse "${{ steps.prev_tag.outputs.tag }}" >/dev/null 2>&1; then
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.prev_tag.outputs.tag }}...${{ github.ref_name }}" >> changelog.md
+          fi
+
+          cat changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: changelog.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-publish:
+    name: Publish Docker Image
+    runs-on: ubuntu-latest
+    needs: release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./claude-agent
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/claude-agent:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}/claude-agent:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
