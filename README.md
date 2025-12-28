@@ -19,6 +19,18 @@ Opinionated starter to run n8n in Docker with PostgreSQL, a Claude-powered AI ag
 - UniFi controller credentials (username/password) for best practices audit
 - Slack Bot token (chat:write scope) and signing secret
 
+## Docker Images
+
+Pre-built images are available from GitHub Container Registry:
+
+```bash
+# Pull the latest Claude Agent image
+docker pull ghcr.io/jfreed-dev/n8n-codex/claude-agent:latest
+
+# Or a specific version
+docker pull ghcr.io/jfreed-dev/n8n-codex/claude-agent:1.0.1
+```
+
 ## Setup
 1) Copy env template and edit:
 ```bash
@@ -30,7 +42,7 @@ cp .env.example .env
 # add SLACK_BOT_TOKEN / SLACK_APP_TOKEN / SLACK_SIGNING_SECRET / SLACK_CHANNEL
 ```
 
-2) Start the stack:
+2) Start the stack (builds locally or uses pre-built image):
 ```bash
 docker compose up -d
 ```
