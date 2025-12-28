@@ -7,11 +7,11 @@ Claude Agent SDK while maintaining the same functionality.
 
 import json
 import logging
-from typing import Any
+
 import httpx
 
 from ..config import settings
-from .prompts import UNIFI_EXPERT_SYSTEM_PROMPT, HEALTH_ANALYSIS_PROMPT, AUDIT_ANALYSIS_PROMPT
+from .prompts import AUDIT_ANALYSIS_PROMPT, HEALTH_ANALYSIS_PROMPT, UNIFI_EXPERT_SYSTEM_PROMPT
 from .tools import TOOL_DEFINITIONS, ConfirmationRequired
 
 logger = logging.getLogger(__name__)

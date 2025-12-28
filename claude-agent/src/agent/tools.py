@@ -4,14 +4,13 @@ These tools are registered with the Claude Agent SDK and can be invoked
 by the agent to query live UniFi controller data.
 """
 
-import json
 import logging
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Literal
 
 from ..config import settings
-from ..unifi.integration_api import UniFiIntegrationAPI
 from ..unifi.controller_api import UniFiControllerAPI
+from ..unifi.integration_api import UniFiIntegrationAPI
 
 logger = logging.getLogger(__name__)
 
@@ -396,7 +395,7 @@ async def get_connected_clients(network: str | None = None, search: str | None =
                        search_lower in c.get("ip", "").lower()]
 
         if not filtered:
-            return f"No clients found matching the criteria."
+            return "No clients found matching the criteria."
 
         lines = [f"**Connected Clients** ({len(filtered)} of {len(clients)} total):"]
 

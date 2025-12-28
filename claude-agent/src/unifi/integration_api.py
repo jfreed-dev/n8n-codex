@@ -4,9 +4,10 @@ Uses X-API-KEY header authentication for read-only access to sites and devices.
 API Reference: https://developer.ui.com/site-manager-api/gettingstarted
 """
 
-import httpx
 import logging
 from typing import Any
+
+import httpx
 
 logger = logging.getLogger(__name__)
 

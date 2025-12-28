@@ -8,11 +8,11 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from .config import settings
 from .agent.core import UniFiExpertAgent
+from .api.routes import router
+from .config import settings
 from .knowledge.embeddings import KnowledgeBase
 from .slack.handler import start_slack_handler
-from .api.routes import router
 
 # Configure logging
 logging.basicConfig(

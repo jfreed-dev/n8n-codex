@@ -4,9 +4,10 @@ Uses cookie-based session authentication for full access to configuration.
 API Reference: https://ubntwiki.com/products/software/unifi-controller/api
 """
 
-import httpx
 import logging
 from typing import Any
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class UniFiControllerAPI:
             # Capture CSRF token from response headers (required for write operations on UniFi OS)
             self._csrf_token = response.headers.get("x-csrf-token")
             if self._csrf_token:
-                logger.info(f"Successfully authenticated with UniFi controller (CSRF token captured)")
+                logger.info("Successfully authenticated with UniFi controller (CSRF token captured)")
             else:
                 logger.info("Successfully authenticated with UniFi controller (no CSRF token in response)")
             return True

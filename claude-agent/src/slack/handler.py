@@ -1,16 +1,14 @@
 """Slack Socket Mode handler for the UniFi Expert Agent."""
 
-import asyncio
 import logging
 import re
-from typing import Any
 
-from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
+from slack_bolt.async_app import AsyncApp
 
-from ..config import settings
 from ..agent.confirmations import ConfirmationStore, DuoAuthClient, PendingAction
-from ..agent.tools import ConfirmationRequired, set_confirmation_store, TOOL_DEFINITIONS
+from ..agent.tools import TOOL_DEFINITIONS, ConfirmationRequired, set_confirmation_store
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +109,7 @@ def build_confirmation_message(pending: PendingAction) -> list[dict]:
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": f"_Expires in 5 minutes_",
+                    "text": "_Expires in 5 minutes_",
                 }
             ],
         },

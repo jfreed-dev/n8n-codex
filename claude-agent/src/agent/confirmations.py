@@ -7,7 +7,7 @@ with optional Duo push notification approval for high-risk actions.
 import asyncio
 import logging
 import secrets
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal
 

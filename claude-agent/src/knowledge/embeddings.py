@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 import chromadb
-from chromadb.config import Settings as ChromaSettings
 
 from ..config import settings
 
