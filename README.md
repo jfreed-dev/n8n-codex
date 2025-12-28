@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/jfreed-dev/n8n-codex/actions/workflows/ci.yml/badge.svg)](https://github.com/jfreed-dev/n8n-codex/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/jfreed-dev/n8n-codex)](https://github.com/jfreed-dev/n8n-codex/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Opinionated starter to run n8n in Docker with PostgreSQL, a Claude-powered AI agent for network intelligence, and UniFi health/config monitoring with Slack alerts.
 
