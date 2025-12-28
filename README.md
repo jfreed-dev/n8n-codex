@@ -8,6 +8,7 @@ Opinionated starter to run n8n in Docker with PostgreSQL, a Claude-powered AI ag
 - `claude-agent/` – AI-powered UniFi network expert with Slack integration and HTTP API.
 - `workflows/unifi_health_to_slack.json` – scheduled UniFi health poller with AI analysis and Slack alerting.
 - `workflows/unifi_best_practices_audit.json` – daily security audit with AI recommendations.
+- `ARCHITECTURE.md` – visual Mermaid diagrams of service topology, data flows, and component interactions.
 
 ## Prereqs
 - Docker + docker compose
