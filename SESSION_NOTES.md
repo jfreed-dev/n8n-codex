@@ -547,10 +547,10 @@ if method.upper() in ("POST", "PUT", "DELETE") and self._csrf_token:
 
 | Command | Flow | Result |
 |---------|------|--------|
-| "Locate device 60:22:32:9b:ee:a9" | Safe → Execute | ✅ HTTP 200 |
-| "Restart device 60:22:32:99:22:2d" | Moderate → Confirm → Execute | ✅ HTTP 200 |
-| "Block client 18:b4:30:e0:ed:30" | Dangerous → Confirm → Duo MFA → Execute | ✅ HTTP 200 |
-| "Unblock client 18:b4:30:e0:ed:30" | Safe → Execute | ✅ HTTP 200 |
+| "Locate device aa:bb:cc:dd:ee:01" | Safe → Execute | ✅ HTTP 200 |
+| "Restart device aa:bb:cc:dd:ee:02" | Moderate → Confirm → Execute | ✅ HTTP 200 |
+| "Block client aa:bb:cc:dd:ee:03" | Dangerous → Confirm → Duo MFA → Execute | ✅ HTTP 200 |
+| "Unblock client aa:bb:cc:dd:ee:03" | Safe → Execute | ✅ HTTP 200 |
 
 ### Commits
 
